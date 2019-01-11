@@ -25,7 +25,7 @@ var send = true;
 var tempcontent='';
 /* INTENT HANDLERS */
 
-//when you invoke your skill, you will triger this handler
+//when you invoke your skill, you will trigger this handler
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
@@ -41,8 +41,8 @@ const LaunchRequestHandler = {
         console.log(profileEmail+'test2');
         userName += profileName;
         userEmail += profileEmail;
-        console.log("REached here 1111");
-        const speechResponse = `Hello, ${profileName}. Welcome to Conrad Reporting Skill. Please say "start report" to get started.`;
+        console.log("Reached here 1111");
+        const speechResponse = `Hello, ${profileName}. Welcome to the Conrad Reporting Skill. Please say "start report" to get started.`;
 
         return responseBuilder
                         .speak(speechResponse)
@@ -70,19 +70,19 @@ const InProgressProgressReport = {
       const request = handlerInput.requestEnvelope.request;
       return request.type === 'IntentRequest'
         && request.intent.name === 'ProgressReport'
-        && request.dialogState !== 'COMPLETED';  //&& request.dialogState !== 'COMPLETED'; means you have not finish the conversation
+        && request.dialogState !== 'COMPLETED';  //&& request.dialogState !== 'COMPLETED'; means you have not finished the conversation
     },
     handle(handlerInput) {
         const filledSlots = handlerInput.requestEnvelope.request.intent.slots;
         const slotvalues_notresolved = getSlotValues(filledSlots);
         const content = slotvalues_notresolved.content.resolved;
-        
+
         if(ProjectName=='empty'){
             if(!first){
                 ProjectName = content;
-                speechResponse = 'what is your task paln for the next fifteen days?';
+                speechResponse = 'What are your task plans for the next fifteen days?';
             }else{
-                speechResponse = 'what is your project name?';
+                speechResponse = 'What is your project name?';
             }
             first =false;
         }else if(TaskPlan15Days=='empty'){
@@ -93,14 +93,14 @@ const InProgressProgressReport = {
                 tempcontent.includes('objective')||tempcontent.includes('milestone')||tempcontent.includes('event')
                   ||tempcontent.includes('mentor')||tempcontent.includes('advisor')||tempcontent.includes('brief')){
                     TaskPlan15Days = tempcontent;
-                    speechResponse = 'what is your problem or challenges?';
+                    speechResponse = 'What are your problems or challenges?';
                     tempcontent='';
                   }else{
                     tempcontent='';
-                    speechResponse='emmm please answer something related to .....';
+                    speechResponse='Please answer something related to ...';
                   }
               }else{
-                    speechResponse = 'what else ?';
+                    speechResponse = 'What else ?';
               }
         }else if(ProblemOrChallenges=='empty'){
             tempcontent += content;
@@ -110,14 +110,14 @@ const InProgressProgressReport = {
                 tempcontent.includes('objective')||tempcontent.includes('milestone')||tempcontent.includes('event')
                   ||tempcontent.includes('mentor')||tempcontent.includes('advisor')||tempcontent.includes('brief')){
                     ProblemOrChallenges = tempcontent;
-                    speechResponse = 'what is your lessons learned?';
+                    speechResponse = 'What are some lessons you\'ve Learned?';
                     tempcontent='';
                   }else{
                     tempcontent='';
-                    speechResponse='emmm please answer something related to .....';
+                    speechResponse='Please answer something related to ...';
                   }
               }else{
-                    speechResponse = 'what else ?';
+                    speechResponse = 'What else?';
               }
         }else if(LessonsLearned=='empty'){
             tempcontent += content;
@@ -127,14 +127,14 @@ const InProgressProgressReport = {
                 tempcontent.includes('objective')||tempcontent.includes('milestone')||tempcontent.includes('event')
                   ||tempcontent.includes('mentor')||tempcontent.includes('advisor')||tempcontent.includes('brief')){
                     LessonsLearned = tempcontent;
-                    speechResponse = 'what is your task for the next month?';
+                    speechResponse = 'What are your tasks for the next month?';
                     tempcontent='';
                   }else{
                     tempcontent='';
-                    speechResponse='emmm please answer something related to .....';
+                    speechResponse='Please answer something related to .....';
                   }
               }else{
-                    speechResponse = 'what else ?';
+                    speechResponse = 'What else ?';
               }
         }else if(TaskPlanNextMonth=='empty'){
             tempcontent += content;
@@ -144,14 +144,14 @@ const InProgressProgressReport = {
                 tempcontent.includes('objective')||tempcontent.includes('milestone')||tempcontent.includes('event')
                   ||tempcontent.includes('mentor')||tempcontent.includes('advisor')||tempcontent.includes('brief')){
                     TaskPlanNextMonth = tempcontent;
-                    speechResponse = 'what are your notes or comments?';
+                    speechResponse = 'If you wish, please leave any notes or comments.';
                     tempcontent='';
                   }else{
                     tempcontent='';
-                    speechResponse='emmm please answer something related to .....';
+                    speechResponse='Please answer something related to .....';
                   }
               }else{
-                    speechResponse = 'what else ?';
+                    speechResponse = 'What else?';
               }
         }else if(NotesOrComments=='empty'){
             tempcontent += content;
@@ -163,24 +163,24 @@ const InProgressProgressReport = {
                     NotesOrComments = tempcontent;
                     speechResponse = `Progress Report:
                         Project Name: ${ProjectName}.
-                        Task(s) Planned for the Month and next 15 days: ${TaskPlan15Days}.
-                        Problem or Challenges you faced and had to manage：${ProblemOrChallenges}.
+                        Task(s) Planned for the month and next 15 days: ${TaskPlan15Days}.
+                        Problem or Challenges you havefaced and had to manage：${ProblemOrChallenges}.
                         Lesson(s) Learned： ${LessonsLearned}.
                         Task(s) Planned for Next Month： ${TaskPlanNextMonth}.
-                        Notes or Comments ${NotesOrComments}. `; 
+                        Notes or Comments ${NotesOrComments}. `;
                     tempcontent='';
                   }else{
                     tempcontent='';
-                    speechResponse='emmm please answer something related to .....';
+                    speechResponse='Please answer something related to .....';
                   }
               }else{
-                    speechResponse = 'what else ?';
+                    speechResponse = 'What else ?';
               }
         }
         if(NotesOrComments=='empty'){
             return handlerInput.responseBuilder
                 .speak(speechResponse)
-                .reprompt('ghjgjhgjhghj')
+                .reprompt('//')
                 .addElicitSlotDirective('content')
                 .getResponse();
         }else {
@@ -188,7 +188,7 @@ const InProgressProgressReport = {
         if(send) {
             var emailBody =  `<html>
                           <head><b>Progress Report</b></head>
-                          <body> 
+                          <body>
                               <p> <b>Student Name :</b> ${userName} </p>
                               <p> <b> Project Name:</b> ${ProjectName} </p>
                               <p> <b> Reporting Date:</b> ${currentDate} </p><br/>
@@ -198,8 +198,8 @@ const InProgressProgressReport = {
                               <h4>Task(s) Planned for Next Month：</h4> <p>   ${TaskPlanNextMonth} </p>
                               <h4>Notes/Comments：</h4> <p>  ${NotesOrComments} </p><br/>
                           </body>
-                        </html>`;    
-  
+                        </html>`;
+
       var outputSpeech =  `Progress Report:
                           Student Name: ${userName}.
                           Project Name: ${ProjectName}.
@@ -208,14 +208,14 @@ const InProgressProgressReport = {
                           Problem or Challenges you faced and had to manage：${ProblemOrChallenges}.
                           Lesson(s) Learned： ${LessonsLearned}.
                           Task(s) Planned for Next Month： ${TaskPlanNextMonth}.
-                          Notes or Comments ${NotesOrComments}. `;   
+                          Notes or Comments ${NotesOrComments}. `;
             AWS.config.update({
                 accessKeyId: 'AKIAI7LW4FA6F65TUXQQ',
                 secretAccessKey: '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',
                 region: 'us-east-1'
               });
-    
-            var htmlBody= emailBody;    
+
+            var htmlBody= emailBody;
             var textBody = `
               Hi ,
               ...
@@ -269,14 +269,14 @@ const InProgressProgressReport = {
   const ProgressReport = {
     canHandle(handlerInput) {
       const request = handlerInput.requestEnvelope.request;
-      return request.type === 'IntentRequest' 
+      return request.type === 'IntentRequest'
         && request.intent.name === 'ProgressReport'
         && request.dialogState === 'COMPLETED';
     },
     handle(handlerInput) {
       return handlerInput.responseBuilder
-        .speak('huhuhu')
-        .reprompt('klkklkljjkljkl')
+        .speak('//')
+        .reprompt('//')
         .getResponse();
     },
   };
@@ -284,7 +284,7 @@ const InProgressProgressReport = {
   const GetEmail = {
     canHandle(handlerInput) {
       const request = handlerInput.requestEnvelope.request;
-      return request.type === 'IntentRequest' 
+      return request.type === 'IntentRequest'
         && request.intent.name === 'GetEmail'
     },
     handle(handlerInput) {
@@ -292,7 +292,7 @@ const InProgressProgressReport = {
         if(send) {
             var emailBody =  `<html>
                           <head><b>Progress Report</b></head>
-                          <body> 
+                          <body>
                               <p> <b>Student Name :</b> ${userName} </p>
                               <p> <b> Project Name:</b> ${ProjectName} </p>
                               <p> <b> Reporting Date:</b> ${currentDate} </p><br/>
@@ -302,8 +302,8 @@ const InProgressProgressReport = {
                               <h4>Task(s) Planned for Next Month：</h4> <p>   ${TaskPlanNextMonth} </p>
                               <h4>Notes/Comments：</h4> <p>  ${NotesOrComments} </p><br/>
                           </body>
-                        </html>`;    
-  
+                        </html>`;
+
       var outputSpeech =  `Progress Report:
                           Student Name: ${userName}.
                           Project Name: ${ProjectName}.
@@ -312,14 +312,14 @@ const InProgressProgressReport = {
                           Problem or Challenges you faced and had to manage：${ProblemOrChallenges}.
                           Lesson(s) Learned： ${LessonsLearned}.
                           Task(s) Planned for Next Month： ${TaskPlanNextMonth}.
-                          Notes or Comments ${NotesOrComments}. `;   
+                          Notes or Comments ${NotesOrComments}. `;
             AWS.config.update({
                 accessKeyId: 'AKIAI7LW4FA6F65TUXQQ',
                 secretAccessKey: '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',
                 region: 'us-east-1'
               });
-    
-            var htmlBody= emailBody;    
+
+            var htmlBody= emailBody;
             var textBody = `
               Hi ,
               ...
@@ -364,7 +364,7 @@ const InProgressProgressReport = {
     initial();
       return handlerInput.responseBuilder
         .speak('the data was sent')
-        .reprompt('klkklkljjkljkl')
+        .reprompt('//')
         .getResponse();
     },
   };
@@ -376,7 +376,7 @@ const HelpHandler = {
   canHandle(handlerInput) {
     const request = handlerInput.requestEnvelope.request;
 
-    return request.type === 'IntentRequest' 
+    return request.type === 'IntentRequest'
       && request.intent.name === 'AMAZON.HelpIntent';
   },
   handle(handlerInput) {
@@ -431,20 +431,20 @@ const ErrorHandler = {
 /* HELPER FUNCTIONS */
 
 function getTodaysDate(){
-  
+
     var today = new Date();
     var dd = today.getDate();
     var mm = today.getMonth()+1; //January is 0!
     var yyyy = today.getFullYear();
-    
+
     if(dd<10) {
         dd = '0'+dd;
-    } 
-    
+    }
+
     if(mm<10) {
         mm = '0'+mm;
-    } 
-    
+    }
+
     today = dd + '/' +  mm + '/' + yyyy;
     return today;
   }
@@ -524,7 +524,7 @@ exports.handler = skillBuilder
     HelpHandler,
     ExitHandler,
     //ErrorHandler,
-    SessionEndedRequestHandler,    
+    SessionEndedRequestHandler,
     InProgressProgressReport,
     ProgressReport,
     GetEmail

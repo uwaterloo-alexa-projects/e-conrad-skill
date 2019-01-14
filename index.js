@@ -22,7 +22,7 @@ let userEmail = '';
 
 // content for email
 let projectName = EMPTY_STATE;
-let ProblemOrChallenges = EMPTY_STATE;
+let problemOrChallenges = EMPTY_STATE;
 let taskPlan15Days = EMPTY_STATE;
 let taskPlanNextMonth = EMPTY_STATE;
 let lessonsLearned = EMPTY_STATE;
@@ -42,9 +42,9 @@ const emailHtmlBody = `<html>
                           <body>
                               <p> <b>Student Name :</b> ${userName} </p>
                               <p> <b> Project Name:</b> ${projectName} </p>
-                              <p> <b> Reporting Date:</b> ${currentDate} </p><br/>
+                              <p> <b> Reporting Date:</b> ${getTodaysDate()} </p><br/>
                               <h4>Task(s) Planned for the Month and next 15 days：</h4> <p> ${taskPlan15Days} </p>
-                              <h4>Problem or Challenges you faced and had to manage：</h4> <p> ${ProblemOrChallenges}</p>
+                              <h4>Problem or Challenges you faced and had to manage：</h4> <p> ${problemOrChallenges}</p>
                               <h4>Lesson(s) Learned：</h4> <p>  ${lessonsLearned} </p>
                               <h4>Task(s) Planned for Next Month：</h4> <p>   ${taskPlanNextMonth} </p>
                               <h4>Notes/Comments：</h4> <p>  ${notes} </p><br/>
@@ -84,9 +84,9 @@ const params = {
 const finalConfirmationVoiceOutput = `Progress Report:
                           Student Name: ${userName}.
                           Project Name: ${projectName}.
-                          Reporting Date: ${currentDate}.
+                          Reporting Date: ${getTodaysDate()}.
                           Task(s) Planned for the Month and next 15 days: ${taskPlan15Days}.
-                          Problem or Challenges you faced and had to manage：${ProblemOrChallenges}.
+                          Problem or Challenges you faced and had to manage：${problemOrChallenges}.
                           Lesson(s) Learned： ${lessonsLearned}.
                           Task(s) Planned for Next Month： ${taskPlanNextMonth}.
                           Notes or Comments ${notes}. `;
@@ -168,12 +168,12 @@ const InProgressProgressReport = {
             } else {
                 speechResponse = 'What else ?';
             }
-        } else if (ProblemOrChallenges === EMPTY_STATE) {
+        } else if (problemOrChallenges === EMPTY_STATE) {
             tempContent += content;
             if (content.includes('finish')) {
                 tempContent = tempContent.substring(0, tempContent.indexOf('finish'));
                 if (containsKeyWordsToProceed(tempContent)) {
-                    ProblemOrChallenges = tempContent;
+                    problemOrChallenges = tempContent;
                     speechResponse = 'What are some lessons you\'ve Learned?';
                     tempContent = '';
                 } else {
@@ -222,7 +222,7 @@ const InProgressProgressReport = {
                     speechResponse = `Progress Report:
                         Project Name: ${projectName}.
                         Task(s) Planned for the month and next 15 days: ${taskPlan15Days}.
-                        Problem or Challenges you havefaced and had to manage：${ProblemOrChallenges}.
+                        Problem or Challenges you havefaced and had to manage：${problemOrChallenges}.
                         Lesson(s) Learned： ${lessonsLearned}.
                         Task(s) Planned for Next Month： ${taskPlanNextMonth}.
                         Notes or Comments ${notes}. `;
@@ -401,7 +401,7 @@ function getTodaysDate() {
 
 function resetToInitialState() {
     projectName = EMPTY_STATE;
-    ProblemOrChallenges = EMPTY_STATE;
+    problemOrChallenges = EMPTY_STATE;
     taskPlan15Days = EMPTY_STATE;
     taskPlanNextMonth = EMPTY_STATE;
     lessonsLearned = EMPTY_STATE;

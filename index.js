@@ -34,6 +34,64 @@ let send = true;
 let tempContent = '';
 let speechResponse = '';
 
+
+/* HTML formatted data for email */
+
+const emailHtmlBody = `<html>
+                          <head><b>Progress Report</b></head>
+                          <body>
+                              <p> <b>Student Name :</b> ${userName} </p>
+                              <p> <b> Project Name:</b> ${projectName} </p>
+                              <p> <b> Reporting Date:</b> ${currentDate} </p><br/>
+                              <h4>Task(s) Planned for the Month and next 15 days：</h4> <p> ${taskPlan15Days} </p>
+                              <h4>Problem or Challenges you faced and had to manage：</h4> <p> ${ProblemOrChallenges}</p>
+                              <h4>Lesson(s) Learned：</h4> <p>  ${lessonsLearned} </p>
+                              <h4>Task(s) Planned for Next Month：</h4> <p>   ${taskPlanNextMonth} </p>
+                              <h4>Notes/Comments：</h4> <p>  ${notes} </p><br/>
+                          </body>
+                    </html>`;
+
+const emailTextBody = `
+              Hi ,
+              ...
+            `;
+
+const params = {
+    Destination: {
+        ToAddresses: ['uwalexacoop@gmail.com']
+        //ToAddresses: [recipient]
+    },
+    Message: {
+        Body: {
+            Html: {
+                Charset: "UTF-8",
+                Data: emailHtmlBody
+            },
+            Text: {
+                Charset: "UTF-8",
+                Data: emailTextBody
+            }
+        },
+        Subject: {
+            Charset: "UTF-8",
+            Data: 'UWATERLOO DATA'
+        }
+    },
+    Source: `Conrad Progress Report from xuan <x34ren@edu.uwaterloo.ca>`
+    //Source: 'Email from Xuan <'+recipient+'>'
+};
+
+const finalConfirmationVoiceOutput = `Progress Report:
+                          Student Name: ${userName}.
+                          Project Name: ${projectName}.
+                          Reporting Date: ${currentDate}.
+                          Task(s) Planned for the Month and next 15 days: ${taskPlan15Days}.
+                          Problem or Challenges you faced and had to manage：${ProblemOrChallenges}.
+                          Lesson(s) Learned： ${lessonsLearned}.
+                          Task(s) Planned for Next Month： ${taskPlanNextMonth}.
+                          Notes or Comments ${notes}. `;
+
+
 /* INTENT HANDLERS */
 
 //when you invoke your skill, you will trigger this handler
@@ -289,62 +347,6 @@ const ErrorHandler = {
             .getResponse();
     },
 };
-
-/* HTML formatted data for email */
-
-const params = {
-    Destination: {
-        ToAddresses: ['uwalexacoop@gmail.com']
-        //ToAddresses: [recipient]
-    },
-    Message: {
-        Body: {
-            Html: {
-                Charset: "UTF-8",
-                Data: emailHtmlBody
-            },
-            Text: {
-                Charset: "UTF-8",
-                Data: emailTextBody
-            }
-        },
-        Subject: {
-            Charset: "UTF-8",
-            Data: 'UWATERLOO DATA'
-        }
-    },
-    Source: `Conrad Progress Report from xuan <x34ren@edu.uwaterloo.ca>`
-    //Source: 'Email from Xuan <'+recipient+'>'
-};
-
-const emailHtmlBody = `<html>
-                          <head><b>Progress Report</b></head>
-                          <body>
-                              <p> <b>Student Name :</b> ${userName} </p>
-                              <p> <b> Project Name:</b> ${projectName} </p>
-                              <p> <b> Reporting Date:</b> ${currentDate} </p><br/>
-                              <h4>Task(s) Planned for the Month and next 15 days：</h4> <p> ${taskPlan15Days} </p>
-                              <h4>Problem or Challenges you faced and had to manage：</h4> <p> ${ProblemOrChallenges}</p>
-                              <h4>Lesson(s) Learned：</h4> <p>  ${lessonsLearned} </p>
-                              <h4>Task(s) Planned for Next Month：</h4> <p>   ${taskPlanNextMonth} </p>
-                              <h4>Notes/Comments：</h4> <p>  ${notes} </p><br/>
-                          </body>
-                    </html>`;
-
-const emailTextBody = `
-              Hi ,
-              ...
-            `;
-
-const finalConfirmationVoiceOutput = `Progress Report:
-                          Student Name: ${userName}.
-                          Project Name: ${projectName}.
-                          Reporting Date: ${currentDate}.
-                          Task(s) Planned for the Month and next 15 days: ${taskPlan15Days}.
-                          Problem or Challenges you faced and had to manage：${ProblemOrChallenges}.
-                          Lesson(s) Learned： ${lessonsLearned}.
-                          Task(s) Planned for Next Month： ${taskPlanNextMonth}.
-                          Notes or Comments ${notes}. `;
 
 /* HELPER FUNCTIONS */
 

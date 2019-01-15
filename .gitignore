@@ -81,3 +81,5 @@ typings/
 
 # api keys should be private
 event.json
+credentials.js
+.DS_Store

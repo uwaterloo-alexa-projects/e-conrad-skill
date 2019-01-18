@@ -22,19 +22,27 @@ const TERMINATION_WORD = 'finish';
 let userName = '';
 let userEmail = '';
 
+let state = new State();
+let currentState = stateEnum.STATE_PROJECT_NAME;
+
 // content for email
-let projectName = EMPTY_STATE;
-let problemOrChallenges = EMPTY_STATE;
-let taskPlan15Days = EMPTY_STATE;
-let taskPlanNextMonth = EMPTY_STATE;
-let lessonsLearned = EMPTY_STATE;
-let notes = EMPTY_STATE;
+let data = {};
 
 // variable state
 let first = true;
 let send = true;
 let tempContent = '';
 let speechResponse = '';
+
+class State {
+    STATE_PROJECT_NAME = 0;
+    STATE_PLAN_SHORT = 1;
+    STATE_PROBLEM = 2;
+    STATE_LESSON = 3;
+    STATE_PLAN_LONG = 4;
+    STATE_NOTES = 5;
+    STATE_CONFIRMATION = 6;
+}
 
 /* INTENT HANDLERS */
 
@@ -89,21 +97,23 @@ const InProgressProgressReport = {
         const slotvalues_notresolved = getSlotValues(filledSlots);
         const content = slotvalues_notresolved.content.resolved;
 
-        if (projectName === EMPTY_STATE) {
+        if (data.projectName === EMPTY_STATE) {
             if (!first) {
-                projectName = content;
+                data.projectName = content;
                 speechResponse = 'What are your task plans for the next fifteen days?';
+                currentState = state.STATE_PLAN_SHORT;
             } else {
                 speechResponse = 'What is your project name?';
             }
             first = false;
-        } else if (taskPlan15Days === EMPTY_STATE) {
+        } else if (data.taskPlan15Days === EMPTY_STATE) {
             tempContent += content;
             if (tempContent.includes('finish')) {
                 tempContent = tempContent.substring(0, tempContent.indexOf('finish'));
                 if (containsKeyWordsToProceed(tempContent)) {
-                    taskPlan15Days = tempContent;
+                    data.taskPlan15Days = tempContent;
                     speechResponse = 'What are your problems or challenges?';
+                    currentState = state.STATE_PROBLEM;
                     tempContent = '';
                 } else {
                     tempContent = '';
@@ -112,13 +122,14 @@ const InProgressProgressReport = {
             } else {
                 speechResponse = 'What else ?';
             }
-        } else if (problemOrChallenges === EMPTY_STATE) {
+        } else if (data.problemOrChallenges === EMPTY_STATE) {
             tempContent += content;
             if (content.includes('finish')) {
                 tempContent = tempContent.substring(0, tempContent.indexOf('finish'));
                 if (containsKeyWordsToProceed(tempContent)) {
-                    problemOrChallenges = tempContent;
+                    data.problemOrChallenges = tempContent;
                     speechResponse = 'What are some lessons you\'ve Learned?';
+                    currentState = state.STATE_LESSON;
                     tempContent = '';
                 } else {
                     tempContent = '';
@@ -127,13 +138,14 @@ const InProgressProgressReport = {
             } else {
                 speechResponse = 'What else?';
             }
-        } else if (lessonsLearned === EMPTY_STATE) {
+        } else if (data.lessonsLearned === EMPTY_STATE) {
             tempContent += content;
             if (content.includes('finish')) {
                 tempContent = tempContent.substring(0, tempContent.indexOf('finish'));
                 if (containsKeyWordsToProceed(tempContent)) {
-                    lessonsLearned = tempContent;
+                    data.lessonsLearned = tempContent;
                     speechResponse = 'What are your tasks for the next month?';
+                    currentState = state.STATE_PLAN_LONG;
                     tempContent = '';
                 } else {
                     tempContent = '';
@@ -142,13 +154,14 @@ const InProgressProgressReport = {
             } else {
                 speechResponse = 'What else ?';
             }
-        } else if (taskPlanNextMonth === EMPTY_STATE) {
+        } else if (data.taskPlanNextMonth === EMPTY_STATE) {
             tempContent += content;
             if (content.includes('finish')) {
                 tempContent = tempContent.substring(0, tempContent.indexOf('finish'));
                 if (containsKeyWordsToProceed(tempContent)) {
-                    taskPlanNextMonth = tempContent;
+                    data.taskPlanNextMonth = tempContent;
                     speechResponse = 'If you wish, please leave any notes or comments.';
+                    currentState = state.STATE_NOTES;
                     tempContent = '';
                 } else {
                     tempContent = '';
@@ -157,12 +170,13 @@ const InProgressProgressReport = {
             } else {
                 speechResponse = 'What else?';
             }
-        } else if (notes === EMPTY_STATE) {
+        } else if (data.notes === EMPTY_STATE) {
             tempContent += content;
             if (content.includes('finish')) {
                 tempContent = tempContent.substring(0, tempContent.indexOf('finish'));
                 if (containsKeyWordsToProceed(tempContent)) {
-                    notes = tempContent;
+                    data.notes = tempContent;
+                    currentState = state.STATE_CONFIRMATION;
                     speechResponse = generateConfirmationVoicePrompt();
                     tempContent = '';
                 } else {
@@ -173,7 +187,7 @@ const InProgressProgressReport = {
                 speechResponse = 'What else ?';
             }
         }
-        if (notes === EMPTY_STATE) {
+        if (data.notes === EMPTY_STATE) {
             return handlerInput.responseBuilder
                 .speak(speechResponse)
                 .reprompt('//')
@@ -289,13 +303,13 @@ const ErrorHandler = {
 function generateConfirmationVoicePrompt() {
     return `Progress Report:
     Student Name: ${userName}.
-    Project Name: ${projectName}.
+    Project Name: ${data.projectName}.
     Reporting Date: ${getTodaysDate()}.
-    Task(s) Planned for the Month and next 15 days: ${taskPlan15Days}.
-    Problem or Challenges you faced and had to manage：${problemOrChallenges}.
-    Lesson(s) Learned： ${lessonsLearned}.
-    Task(s) Planned for Next Month： ${taskPlanNextMonth}.
-    Notes or Comments ${notes}. `;
+    Task(s) Planned for the Month and next 15 days: ${data.taskPlan15Days}.
+    Problem or Challenges you faced and had to manage：${data.problemOrChallenges}.
+    Lesson(s) Learned： ${data.lessonsLearned}.
+    Task(s) Planned for Next Month： ${data.taskPlanNextMonth}.
+    Notes or Comments ${data.notes}. `;
 }
 
 function generateParams() {
@@ -330,13 +344,13 @@ function generateEmailHtmlBody() {
         <head><b>Progress Report</b></head>
         <body>
             <p> <b>Student Name :</b> ${userName} </p>
-            <p> <b> Project Name:</b> ${projectName} </p>
+            <p> <b> Project Name:</b> ${data.projectName} </p>
             <p> <b> Reporting Date:</b> ${getTodaysDate()} </p><br/>
-            <h4>Task(s) Planned for the Month and next 15 days：</h4> <p> ${taskPlan15Days} </p>
-            <h4>Problem or Challenges you faced and had to manage：</h4> <p> ${problemOrChallenges}</p>
-            <h4>Lesson(s) Learned：</h4> <p>  ${lessonsLearned} </p>
-            <h4>Task(s) Planned for Next Month：</h4> <p>   ${taskPlanNextMonth} </p>
-            <h4>Notes/Comments：</h4> <p>  ${notes} </p><br/>
+            <h4>Task(s) Planned for the Month and next 15 days：</h4> <p> ${data.taskPlan15Days} </p>
+            <h4>Problem or Challenges you faced and had to manage：</h4> <p> ${data.problemOrChallenges}</p>
+            <h4>Lesson(s) Learned：</h4> <p>  ${data.lessonsLearned} </p>
+            <h4>Task(s) Planned for Next Month：</h4> <p>   ${data.taskPlanNextMonth} </p>
+            <h4>Notes/Comments：</h4> <p>  ${data.notes} </p><br/>
         </body>
     </html>`;
 
@@ -399,12 +413,13 @@ function getTodaysDate() {
 }
 
 function resetToInitialState() {
-    projectName = EMPTY_STATE;
-    problemOrChallenges = EMPTY_STATE;
-    taskPlan15Days = EMPTY_STATE;
-    taskPlanNextMonth = EMPTY_STATE;
-    lessonsLearned = EMPTY_STATE;
-    notes = EMPTY_STATE;
+    state.currentState = state.STATE_PROJECT_NAME;
+    data.projectName = EMPTY_STATE;
+    data.problemOrChallenges = EMPTY_STATE;
+    data.taskPlan15Days = EMPTY_STATE;
+    data.taskPlanNextMonth = EMPTY_STATE;
+    data.lessonsLearned = EMPTY_STATE;
+    data.notes = EMPTY_STATE;
     first = true;
     send = true;
 }

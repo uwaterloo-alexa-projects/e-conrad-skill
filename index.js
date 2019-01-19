@@ -47,19 +47,7 @@ let send = true;
 let tempContent = '';
 let speechResponse = '';
 
-<<<<<<< HEAD
-class State {
-    STATE_PROJECT_NAME = 0;
-    STATE_PLAN_SHORT = 1;
-    STATE_PROBLEM = 2;
-    STATE_LESSON = 3;
-    STATE_PLAN_LONG = 4;
-    STATE_NOTES = 5;
-    STATE_CONFIRMATION = 6;
-}
-=======
 
->>>>>>> 6469099d202aee893ccef4e77f2a56527e138ef6
 /* INTENT HANDLERS */
 
 //when you invoke your skill, you will trigger this handler
@@ -169,13 +157,13 @@ const InProgressProgressReport = {
 // helpers for the progress intent
 
 function handleStateInit() {
-    speechResponse = 'What is your project name?';            
+    speechResponse = 'What is your project name?';
     currentState = STATE_PROJECT_NAME;
 }
 
 function handleStateProjectName(content) {
     data.projectName = content;
-    speechResponse = 'What are your task plans for the next fifteen days?';            
+    speechResponse = 'What are your task plans for the next fifteen days?';
     currentState = STATE_PLAN_SHORT;
 }
 
@@ -279,7 +267,7 @@ const GetEmail = {
     canHandle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
         return request.type === 'IntentRequest'
-            && request.intent.name === 'GetEmail'
+            && request.intent.name === 'GetEmail';
     },
     handle(handlerInput) {
         const currentDate = getTodaysDate();
@@ -303,8 +291,8 @@ const Skip = {
     handle(handlerInput) {
         currentState += 1;
         return handlerInput.responseBuilder
+            .addDelegateDirective(InProgressProgressReport)
             .speak('Question was skipped');
-        return InProgressProgressReport.handle(handlerInput);
     },
 };
 
@@ -317,8 +305,8 @@ const Restart = {
     handle(handlerInput) {
         resetToInitialState();
         return handlerInput.responseBuilder
+            .addDelegateDirective(InProgressProgressReport)
             .speak('Restarting report...');
-        return InProgressProgressReport.handle(handlerInput);
     },
 };
 
@@ -329,25 +317,13 @@ const Summary = {
             && request.intent.name === 'AMAZON.Summary';
     },
     handle(handlerInput) {
-      const state -= currentState;
+      const state = currentState-1;
       return handlerInput.responseBuilder
         .speak('The response to your last question was' + getData(state)
-              + '');
-        .addElicitSlotDirective('confirm');
+              + 'Would you like to redo this question?')
+        .getResponse();
+    }
 
-          if (confirm == "yes"){
-            currentState -=1;
-            return InProgressProgressReport.handle(handlerInput);
-
-          }else {
-            return handlerInput.responseBuilder
-              .speak("Continuing Report...");
-            return InProgressProgressReport.handle(handlerInput);
-          }
-
-        };
-
-    },
 };
 
 
@@ -360,13 +336,37 @@ const HelpHandler = {
     },
     handle(handlerInput) {
         return handlerInput.responseBuilder
-            .speak('This is Conrad Progress Report Skill.
-                    You can say, Start Report to start your report,
-                    Restart to restart your report,
-                    Skip to skip your question
-                    ')
+            .speak('This is Conrad Progress Report Skill.You can say, Start Report to start your report, Restart to restart your report, Skip to skip your question')
             .reprompt('Say help again to iterate the options')
             .getResponse();
+    },
+};
+
+const NoHandler = {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+
+        return request.type === 'IntentRequest'
+            && request.intent.name === 'AMAZON.NoIntent';
+    },
+    handle(handlerInput) {
+        return handlerInput.responseBuilder
+            .addDelegateDirective(InProgressProgressReport);
+    },
+};
+
+const YesHandler = {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+
+        return request.type === 'IntentRequest'
+            && request.intent.name === 'AMAZON.YesIntent';
+    },
+    handle(handlerInput) {
+        currentState -=1;
+        return handlerInput.responseBuilder
+            .speak('Restarting question...')
+            .addDelegateDirective(InProgressProgressReport);
     },
 };
 
@@ -409,14 +409,6 @@ const ErrorHandler = {
 };
 
 /* HTML and markdown formatting functions */
-
-function convertBulletPointsToText(bullets) {
-    let text = "";
-    bullets.forEach(bullet => {
-        text += bullet + ". ";
-    });
-    return text;
-}
 
 function generateConfirmationVoicePrompt() {
 
@@ -479,7 +471,7 @@ function convertBulletPointsToText(bullets) {
     let text = "";
     bullets.forEach(bullet => {
         text += bullet + ". ";
-    })
+    });
     return text;
 }
 
@@ -552,35 +544,36 @@ function resetToInitialState() {
 }
 
 function getData(state){
+
+  let text='';
+
   switch(state) {
 
   case 0:
-    return data.projectName;
+    text = data.projectName;
     break;
 
   case 1:
-    return convertBulletPointsToText(data.taskPlan15Days);
+    text = convertBulletPointsToText(data.taskPlan15Days);
     break;
 
   case 2:
-    return convertBulletPointsToText(data.problemOrChallenges);
+    text = convertBulletPointsToText(data.problemOrChallenges);
     break;
 
   case 3:
-    return convertBulletPointsToText(data.lessonsLearned);
+    text = convertBulletPointsToText(data.lessonsLearned);
     break;
 
   case 4:
-    return convertBulletPointsToText(data.taskPlanNextMonth);
+    text = convertBulletPointsToText(data.taskPlanNextMonth);
     break;
 
   case 5:
-    return convertBulletPointsToText(data.notes);
+    text = convertBulletPointsToText(data.notes);
     break;
-
-  default:
-    console.log('Not Valid State');
 }
+return text;
 }
 
 function getSlotValues(filledSlots) {
@@ -654,7 +647,9 @@ exports.handler = skillBuilder
         GetEmail,
         Summary,
         Skip,
-        Restart
+        Restart,
+        YesHandler,
+        NoHandler
     )
     /*.addErrorHandlers(ErrorHandler)
     .withApiClient(new Alexa.DefaultApiClient())

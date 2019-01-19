@@ -3,7 +3,7 @@ const Alexa = require('ask-sdk-core');
 const AWS = require("aws-sdk");
 const APP_NAME = "Conrad Progress Report Skill";
 
-//require other modules 
+//require other modules
 const aws_credentials = require('./credentials');
 
 // constant strings
@@ -43,7 +43,6 @@ class State {
     STATE_NOTES = 5;
     STATE_CONFIRMATION = 6;
 }
-
 /* INTENT HANDLERS */
 
 //when you invoke your skill, you will trigger this handler
@@ -241,6 +240,62 @@ const GetEmail = {
     },
 };
 
+const Skip = {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        return request.type === 'IntentRequest'
+            && request.intent.name === 'AMAZON.Skip';
+    },
+    handle(handlerInput) {
+        currentState += 1;
+        return handlerInput.responseBuilder
+            .speak('Question was skipped');
+        return InProgressProgressReport.handle(handlerInput);
+    },
+};
+
+const Restart = {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        return request.type === 'IntentRequest'
+            && request.intent.name === 'AMAZON.Restart';
+    },
+    handle(handlerInput) {
+        resetToInitialState();
+        return handlerInput.responseBuilder
+            .speak('Restarting report...');
+        return InProgressProgressReport.handle(handlerInput);
+    },
+};
+
+const Summary = {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        return request.type === 'IntentRequest'
+            && request.intent.name === 'AMAZON.Summary';
+    },
+    handle(handlerInput) {
+      const state -= currentState;
+      return handlerInput.responseBuilder
+        .speak('The response to your last question was' + getData(state)
+              + '');
+        .addElicitSlotDirective('confirm');
+
+          if (confirm == "yes"){
+            currentState -=1;
+            return InProgressProgressReport.handle(handlerInput);
+
+          }else {
+            return handlerInput.responseBuilder
+              .speak("Continuing Report...");
+            return InProgressProgressReport.handle(handlerInput);
+          }
+
+        };
+
+    },
+};
+
 
 const HelpHandler = {
     canHandle(handlerInput) {
@@ -251,8 +306,12 @@ const HelpHandler = {
     },
     handle(handlerInput) {
         return handlerInput.responseBuilder
-            .speak('This is Conrad Progress Report Skill. You can say, start report.')
-            .reprompt('You can say, start report.')
+            .speak('This is Conrad Progress Report Skill.
+                    You can say, Start Report to start your report,
+                    Restart to restart your report,
+                    Skip to skip your question
+                    ')
+            .reprompt('Say help again to iterate the options')
             .getResponse();
     },
 };
@@ -291,10 +350,7 @@ const ErrorHandler = {
     handle(handlerInput, error) {
         console.log(`Error handled: ${error.message}`);
 
-        return handlerInput.responseBuilder
-            .speak('Sorry, I can\'t understand the command. Please say again.')
-            .reprompt('Sorry, I can\'t understand the command. Please say again.')
-            .getResponse();
+
     },
 };
 
@@ -354,6 +410,14 @@ function generateEmailHtmlBody() {
         </body>
     </html>`;
 
+}
+
+function convertBulletPointsToText(bullets) {
+    let text = "";
+    bullets.forEach(bullet => {
+        text += bullet + ". ";
+    })
+    return text;
 }
 
 function generateEmailTextBody() {
@@ -424,6 +488,38 @@ function resetToInitialState() {
     send = true;
 }
 
+function getData(state){
+  switch(state) {
+
+  case 0:
+    return data.projectName;
+    break;
+
+  case 1:
+    return convertBulletPointsToText(data.taskPlan15Days);
+    break;
+
+  case 2:
+    return convertBulletPointsToText(data.problemOrChallenges);
+    break;
+
+  case 3:
+    return convertBulletPointsToText(data.lessonsLearned);
+    break;
+
+  case 4:
+    return convertBulletPointsToText(data.taskPlanNextMonth);
+    break;
+
+  case 5:
+    return convertBulletPointsToText(data.notes);
+    break;
+
+  default:
+    console.log('Not Valid State');
+}
+}
+
 function getSlotValues(filledSlots) {
     const slotValues = {};
 
@@ -492,7 +588,10 @@ exports.handler = skillBuilder
         SessionEndedRequestHandler,
         InProgressProgressReport,
         ProgressReport,
-        GetEmail
+        GetEmail,
+        Summary,
+        Skip,
+        Restart
     )
     /*.addErrorHandlers(ErrorHandler)
     .withApiClient(new Alexa.DefaultApiClient())

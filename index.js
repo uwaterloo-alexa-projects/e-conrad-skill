@@ -47,9 +47,6 @@ let data = {};
 // variable state
 let first = true;
 let send = true;
-let interject = false;
-let interjectIntent = '';
-let tempContent = '';
 let speechResponse = '';
 
 
@@ -105,7 +102,18 @@ const InProgressProgressReport = {
         const slotvalues_notresolved = getSlotValues(filledSlots);
         const content = slotvalues_notresolved.content.resolved;
 
-        switch(currentState) {
+        if (containsInterjetWords(content)) {
+            if (content.includes(HELP_WORD)) {
+                return HelpHandler.handle(handlerInput);
+            } else if (content.includes(SUMMARY_WORD)) {
+                return Summary.handle(handlerInput);
+            } else if (content.includes(RESTART_WORD)) {
+                return Restart.handle(handlerInput);
+            }
+        }
+
+
+        switch (currentState) {
             case STATE_INIT:
                 handleStateInit();
                 break;
@@ -129,29 +137,16 @@ const InProgressProgressReport = {
                 break;
         }
 
-        if (currentState == STATE_CONFIRMATION) {
+        // TODO FIX BELOW THIS
+        if (currentState === STATE_CONFIRMATION) {
             currentState = STATE_SENDING;
             return handlerInput.responseBuilder
                 .speak(speechResponse + " .is this alright? Say send to send. Say restart to start over.")
                 .reprompt('is this alright? Say send to send. Say restart to start over')
                 .getResponse();
-        } else if (currentState == STATE_SENDING) {
+        } else if (currentState === STATE_SENDING) {
             return handlerInput.responseBuilder
                 .speak("sending email...");
-            // SEND EMAIL CODE
-        } else if (interject) {
-            if (currentState != 0){
-                currentState -=1;
-            }
-            interject = false;
-
-            if(interjectIntent == 'help'){
-                return HelpHandler.handle(handlerInput);
-            } else if (interjectIntent == 'summary'){
-                return Summary.handle(handlerInput)
-            } else if (interjectIntent == 'restart'){
-                return Restart.handle(handlerInput)
-            };
             // SEND EMAIL CODE
         } else {
             return handlerInput.responseBuilder
@@ -184,147 +179,109 @@ function handleStateProjectName(content) {
     speechResponse = 'What are your task plans for the next fifteen days?';
     currentState = STATE_PLAN_SHORT;
 
-    if (content.includes(TERMINATION_WORD)){
-      speechResponse = 'What are your task plans for the next fifteen days?';
-      currentState = STATE_PLAN_SHORT;
-    } else if (content.includes(HELP_WORD)||content.includes(SUMMARY_WORD)||content.includes(RESTART_WORD)){
-      interject = true;
-        if(content.includes(HELP_WORD)){
-            interjectIntent = HELP_WORD;
-        } else if (content.includes(SUMMARY_WORD)){
-            interjectIntent = SUMMARY_WORD;
-        } else if (content.includes(RESTART_WORD)){
-            interjectIntent = RESTART_WORD;
-        };
+    if (content.includes(TERMINATION_WORD)) {
+        speechResponse = 'What are your task plans for the next fifteen days?';
+        currentState = STATE_PLAN_SHORT;
     } else {
-      data.projectName = content;
+        data.projectName = content;
     }
 }
 
 function handleStatePlanShort(content) {
-    let endWord = '';
-
-    if (content.includes(TERMINATION_WORD)) {
+    if (containsTerminationWord(content)) {
         content = content.substring(0, content.indexOf(TERMINATION_WORD));
         data.taskPlan15Days.push(content);
         speechResponse = 'What are your problems or challenges?';
         currentState = STATE_PROBLEM;
-    } else if (content.includes(HELP_WORD)||content.includes(SUMMARY_WORD)||content.includes(RESTART_WORD)){
-        interject = true;
-        if(content.includes(HELP_WORD)){
-            interjectIntent = HELP_WORD;
-        } else if (content.includes(SUMMARY_WORD)){
-            interjectIntent = SUMMARY_WORD;
-        } else if (content.includes(RESTART_WORD)){
-            interjectIntent = RESTART_WORD;
-        };
     } else if (shouldContinue(content)) {
         speechResponse = 'What are your problems or challenges?';
         currentState = STATE_PROBLEM;
     } else {
         speechResponse = MORE_INFO_PHRASE;
-        data.taskPlan15Days.push(content);
+        if (content !== undefined) {
+            data.taskPlan15Days.push(content);
+        }
     }
 }
 
 function handleProblem(content) {
-    if (content.includes(TERMINATION_WORD)) {
+    if (containsTerminationWord(content)) {
         content = content.substring(0, content.indexOf(TERMINATION_WORD));
         data.problemOrChallenges.push(content);
-        speechResponse = 'What are some lessons you\'ve Learned?';
+        speechResponse = 'What are some lessons you\'ve learned?';
         currentState = STATE_LESSON;
     } else if (shouldContinue(content)) {
-        speechResponse = 'What are some lessons you\'ve Learned?';
+        speechResponse = 'What are some lessons you\'ve learned?';
         currentState = STATE_LESSON;
-    } else if (content.includes(HELP_WORD)||content.includes(SUMMARY_WORD)||content.includes(RESTART_WORD)){
-        interject = true;
-        if(content.includes(HELP_WORD)){
-            interjectIntent = HELP_WORD;
-        } else if (content.includes(SUMMARY_WORD)){
-            interjectIntent = SUMMARY_WORD;
-        } else if (content.includes(RESTART_WORD)){
-            interjectIntent = RESTART_WORD;
-        };
     } else {
         speechResponse = MORE_INFO_PHRASE;
-        data.problemOrChallenges.push(content);
+        if (content !== undefined) {
+            data.problemOrChallenges.push(content);
+        }
     }
 }
 
 function handleLesson(content) {
-    if (content.includes(TERMINATION_WORD)) {
+    if (containsTerminationWord(content)) {
         content = content.substring(0, content.indexOf(TERMINATION_WORD));
         data.lessonsLearned.push(content);
         speechResponse = 'What are your tasks for the next month?';
         currentState = STATE_PLAN_LONG;
-    }else if (content.includes(HELP_WORD)||content.includes(SUMMARY_WORD)||content.includes(RESTART_WORD)){
-        interject = true;
-        if(content.includes(HELP_WORD)){
-            interjectIntent = HELP_WORD;
-        } else if (content.includes(SUMMARY_WORD)){
-            interjectIntent = SUMMARY_WORD;
-        } else if (content.includes(RESTART_WORD)){
-            interjectIntent = RESTART_WORD;
-        };
     } else if (shouldContinue(content)) {
         speechResponse = 'What are your tasks for the next month?';
         currentState = STATE_PLAN_LONG;
     } else {
         speechResponse = MORE_INFO_PHRASE;
-        data.lessonsLearned.push(content);
+        if (content !== undefined) {
+            data.lessonsLearned.push(content);
+        }
     }
 }
 
 function handleStatePlanLong(content) {
-    if (content.includes(TERMINATION_WORD)) {
+    if (containsTerminationWord(content)) {
         content = content.substring(0, content.indexOf(TERMINATION_WORD));
         data.taskPlanNextMonth.push(content);
         speechResponse = 'If you wish, please leave any notes or comments.';
         currentState = STATE_NOTES;
-    } else if (content.includes(HELP_WORD)||content.includes(SUMMARY_WORD)||content.includes(RESTART_WORD)){
-        interject = true;
-        if(content.includes(HELP_WORD)){
-            interjectIntent = HELP_WORD;
-        } else if (content.includes(SUMMARY_WORD)){
-            interjectIntent = SUMMARY_WORD;
-        } else if (content.includes(RESTART_WORD)){
-            interjectIntent = RESTART_WORD;
-        };
     } else if (shouldContinue(content)) {
         speechResponse = 'If you wish, please leave any notes or comments.';
         currentState = STATE_NOTES;
     } else {
         speechResponse = MORE_INFO_PHRASE;
-        data.taskPlanNextMonth.push(content);
+        if (content !== undefined) {
+            data.taskPlanNextMonth.push(content);
+        }
     }
 }
 
 function handleNotes(content) {
-    if (content.includes(TERMINATION_WORD)) {
+    if (containsTerminationWord(content)) {
         content = content.substring(0, content.indexOf(TERMINATION_WORD));
         data.notes.push(content);
         speechResponse = generateConfirmationVoicePrompt();
         currentState = STATE_CONFIRMATION;
-    }else if (content.includes(HELP_WORD)||content.includes(SUMMARY_WORD)||content.includes(RESTART_WORD)){
-        interject = true;
-        if(content.includes(HELP_WORD)){
-            interjectIntent = HELP_WORD;
-        } else if (content.includes(SUMMARY_WORD)){
-            interjectIntent = SUMMARY_WORD;
-        } else if (content.includes(RESTART_WORD)){
-            interjectIntent = RESTART_WORD;
-        };
     } else if (shouldContinue(content)) {
         speechResponse = generateConfirmationVoicePrompt();
         currentState = STATE_CONFIRMATION;
     } else {
         speechResponse = MORE_INFO_PHRASE;
-        data.notes.push(content);
+        if (content !== undefined) {
+            data.notes.push(content);
+        }
     }
 }
 
+function containsTerminationWord(content) {
+    return content !== undefined && content.includes(TERMINATION_WORD);
+}
+
 function shouldContinue(content) {
-    return nextStepPhrases.includes(content);
+    return content !== undefined && nextStepPhrases.includes(content);
+}
+
+function containsInterjetWords(content) {
+    return content !== undefined && (HELP_WORD.includes(content) || SUMMARY_WORD.includes(content) || RESTART_WORD.includes(content));
 }
 
 // end of helpers for progress intent
@@ -385,10 +342,10 @@ const Summary = {
             && request.intent.name === 'Summary';
     },
     handle(handlerInput) {
-        currentState += 1;
-        let lastoutput = getData(currentState);
+        let lastOutput = getData(currentState);
+
         return handlerInput.responseBuilder
-            .speak('The response to your last question was' + lastoutput + 'Would you like to redo this question? If not, say continue report to continue your report.')
+            .speak("The response to your last question was: [" + lastOutput + "]. Would you like to redo this question? If not, say continue report to continue your report.")
             .reprompt('//')
             .getResponse();
     },
@@ -405,7 +362,11 @@ const HelpHandler = {
     },
     handle(handlerInput) {
         return handlerInput.responseBuilder
-            .speak('You can say, Start Report to start your report or continue report to continue your report, Restart to restart your report, Skip to skip your question, Next if you have completed answering a question')
+            .speak('You can say, Start Report to start your report or continue report to continue your report, ' +
+                'Restart to restart your report, ' +
+                'Skip to skip your question, ' +
+                'Next if you have completed answering a question. ' +
+                'Continue by saying continue report to resume your current question')
             .reprompt('//')
             .getResponse();
     },
@@ -419,9 +380,7 @@ const YesHandler = {
             && request.intent.name === 'AMAZON.YesIntent';
     },
     handle(handlerInput) {
-        if (currentState != 0){
-            currentState -=1;
-        }
+        clearData(currentState);
         return handlerInput.responseBuilder
             .speak('Restarting Question... Say continue report to keep reporting')
             .reprompt('//')
@@ -565,6 +524,7 @@ function updateAWSConfig() {
     AWS.config.update(aws_credentials.AWS_CONFIG);
 }
 
+// unused function at the moment
 function containsKeyWordsToProceed(tempContent) {
     return tempContent.includes('course') || tempContent.includes('term goal') || tempContent.includes('action plan') ||
         tempContent.includes('objective') || tempContent.includes('milestone') || tempContent.includes('event')
@@ -602,37 +562,48 @@ function resetToInitialState() {
     send = true;
 }
 
-function getData(state){
-
-  let text='';
-
-  switch(state) {
-
-  case 0:
-    text = data.projectName;
-    break;
-
-  case 1:
-    text = convertBulletPointsToText(data.taskPlan15Days);
-    break;
-
-  case 2:
-    text = convertBulletPointsToText(data.problemOrChallenges);
-    break;
-
-  case 3:
-    text = convertBulletPointsToText(data.lessonsLearned);
-    break;
-
-  case 4:
-    text = convertBulletPointsToText(data.taskPlanNextMonth);
-    break;
-
-  case 5:
-    text = convertBulletPointsToText(data.notes);
-    break;
+function getData(state) {
+    switch (state) {
+        case STATE_INIT:
+            return "no data to report at the moment";
+        case STATE_PROJECT_NAME:
+            return convertBulletPointsToText(data.projectName);
+        case STATE_PLAN_SHORT:
+            return convertBulletPointsToText(data.taskPlan15Days);
+        case STATE_PROBLEM:
+            return convertBulletPointsToText(data.problemOrChallenges);
+        case STATE_LESSON:
+            return convertBulletPointsToText(data.lessonsLearned);
+        case STATE_PLAN_LONG:
+            return convertBulletPointsToText(data.taskPlanNextMonth);
+        case STATE_NOTES:
+            return convertBulletPointsToText(data.notes);
+    }
 }
-return text;
+
+function clearData(state) {
+    switch (state) {
+        case STATE_INIT:
+            break;
+        case STATE_PROJECT_NAME:
+            data.projectName = '';
+            break;
+        case STATE_PLAN_SHORT:
+            data.taskPlan15Days = [];
+            break;
+        case STATE_PROBLEM:
+            data.problemOrChallenges = [];
+            break;
+        case STATE_LESSON:
+            data.lessonsLearned = [];
+            break;
+        case STATE_PLAN_LONG:
+            data.taskPlanNextMonth = [];
+            break;
+        case STATE_NOTES:
+            data.notes = [];
+            break;
+    }
 }
 
 function getSlotValues(filledSlots) {

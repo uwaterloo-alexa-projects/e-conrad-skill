@@ -17,8 +17,11 @@ const EMAIL_PERMISSION = "alexa::profile:email:read";
 const EMPTY_STATE = 'empty';
 // used to move on to next step
 const TERMINATION_WORD = 'next';
+const HELP_WORD = ['help'];
+const SUMMARY_WORD = ['summary'];
+const RESTART_WORD = ['restart'];
 const MORE_INFO_PHRASE = 'Anything else?';
-const nextStepPhrases = ['nothing', 'nope', 'no', 'finish', 'next', 'continue', 'stop', 'that\'s it'];
+const nextStepPhrases = ['nothing', 'nope', 'no', 'finish', 'next', 'continue', 'stop', 'that\'s it', 'skip'];
 
 // user state
 let userName = '';
@@ -44,6 +47,8 @@ let data = {};
 // variable state
 let first = true;
 let send = true;
+let interject = false;
+let interjectIntent = '';
 let tempContent = '';
 let speechResponse = '';
 
@@ -129,11 +134,24 @@ const InProgressProgressReport = {
             return handlerInput.responseBuilder
                 .speak(speechResponse + " .is this alright? Say send to send. Say restart to start over.")
                 .reprompt('is this alright? Say send to send. Say restart to start over')
-                .addElicitSlotDirective('content')
                 .getResponse();
         } else if (currentState == STATE_SENDING) {
             return handlerInput.responseBuilder
                 .speak("sending email...");
+            // SEND EMAIL CODE
+        } else if (interject) {
+            if (currentState != 0){
+                currentState -=1;
+            }
+            interject = false;
+
+            if(interjectIntent == 'help'){
+                return HelpHandler.handle(handlerInput);
+            } else if (interjectIntent == 'summary'){
+                return Summary.handle(handlerInput)
+            } else if (interjectIntent == 'restart'){
+                return Restart.handle(handlerInput)
+            };
             // SEND EMAIL CODE
         } else {
             return handlerInput.responseBuilder
@@ -162,17 +180,44 @@ function handleStateInit() {
 }
 
 function handleStateProjectName(content) {
-    data.projectName = content;
+
     speechResponse = 'What are your task plans for the next fifteen days?';
     currentState = STATE_PLAN_SHORT;
+
+    if (content.includes(TERMINATION_WORD)){
+      speechResponse = 'What are your task plans for the next fifteen days?';
+      currentState = STATE_PLAN_SHORT;
+    } else if (content.includes(HELP_WORD)||content.includes(SUMMARY_WORD)||content.includes(RESTART_WORD)){
+      interject = true;
+        if(content.includes(HELP_WORD)){
+            interjectIntent = HELP_WORD;
+        } else if (content.includes(SUMMARY_WORD)){
+            interjectIntent = SUMMARY_WORD;
+        } else if (content.includes(RESTART_WORD)){
+            interjectIntent = RESTART_WORD;
+        };
+    } else {
+      data.projectName = content;
+    }
 }
 
 function handleStatePlanShort(content) {
+    let endWord = '';
+
     if (content.includes(TERMINATION_WORD)) {
         content = content.substring(0, content.indexOf(TERMINATION_WORD));
         data.taskPlan15Days.push(content);
         speechResponse = 'What are your problems or challenges?';
         currentState = STATE_PROBLEM;
+    } else if (content.includes(HELP_WORD)||content.includes(SUMMARY_WORD)||content.includes(RESTART_WORD)){
+        interject = true;
+        if(content.includes(HELP_WORD)){
+            interjectIntent = HELP_WORD;
+        } else if (content.includes(SUMMARY_WORD)){
+            interjectIntent = SUMMARY_WORD;
+        } else if (content.includes(RESTART_WORD)){
+            interjectIntent = RESTART_WORD;
+        };
     } else if (shouldContinue(content)) {
         speechResponse = 'What are your problems or challenges?';
         currentState = STATE_PROBLEM;
@@ -191,6 +236,15 @@ function handleProblem(content) {
     } else if (shouldContinue(content)) {
         speechResponse = 'What are some lessons you\'ve Learned?';
         currentState = STATE_LESSON;
+    } else if (content.includes(HELP_WORD)||content.includes(SUMMARY_WORD)||content.includes(RESTART_WORD)){
+        interject = true;
+        if(content.includes(HELP_WORD)){
+            interjectIntent = HELP_WORD;
+        } else if (content.includes(SUMMARY_WORD)){
+            interjectIntent = SUMMARY_WORD;
+        } else if (content.includes(RESTART_WORD)){
+            interjectIntent = RESTART_WORD;
+        };
     } else {
         speechResponse = MORE_INFO_PHRASE;
         data.problemOrChallenges.push(content);
@@ -203,6 +257,15 @@ function handleLesson(content) {
         data.lessonsLearned.push(content);
         speechResponse = 'What are your tasks for the next month?';
         currentState = STATE_PLAN_LONG;
+    }else if (content.includes(HELP_WORD)||content.includes(SUMMARY_WORD)||content.includes(RESTART_WORD)){
+        interject = true;
+        if(content.includes(HELP_WORD)){
+            interjectIntent = HELP_WORD;
+        } else if (content.includes(SUMMARY_WORD)){
+            interjectIntent = SUMMARY_WORD;
+        } else if (content.includes(RESTART_WORD)){
+            interjectIntent = RESTART_WORD;
+        };
     } else if (shouldContinue(content)) {
         speechResponse = 'What are your tasks for the next month?';
         currentState = STATE_PLAN_LONG;
@@ -218,6 +281,15 @@ function handleStatePlanLong(content) {
         data.taskPlanNextMonth.push(content);
         speechResponse = 'If you wish, please leave any notes or comments.';
         currentState = STATE_NOTES;
+    } else if (content.includes(HELP_WORD)||content.includes(SUMMARY_WORD)||content.includes(RESTART_WORD)){
+        interject = true;
+        if(content.includes(HELP_WORD)){
+            interjectIntent = HELP_WORD;
+        } else if (content.includes(SUMMARY_WORD)){
+            interjectIntent = SUMMARY_WORD;
+        } else if (content.includes(RESTART_WORD)){
+            interjectIntent = RESTART_WORD;
+        };
     } else if (shouldContinue(content)) {
         speechResponse = 'If you wish, please leave any notes or comments.';
         currentState = STATE_NOTES;
@@ -233,6 +305,15 @@ function handleNotes(content) {
         data.notes.push(content);
         speechResponse = generateConfirmationVoicePrompt();
         currentState = STATE_CONFIRMATION;
+    }else if (content.includes(HELP_WORD)||content.includes(SUMMARY_WORD)||content.includes(RESTART_WORD)){
+        interject = true;
+        if(content.includes(HELP_WORD)){
+            interjectIntent = HELP_WORD;
+        } else if (content.includes(SUMMARY_WORD)){
+            interjectIntent = SUMMARY_WORD;
+        } else if (content.includes(RESTART_WORD)){
+            interjectIntent = RESTART_WORD;
+        };
     } else if (shouldContinue(content)) {
         speechResponse = generateConfirmationVoicePrompt();
         currentState = STATE_CONFIRMATION;
@@ -282,31 +363,18 @@ const GetEmail = {
     },
 };
 
-const Skip = {
-    canHandle(handlerInput) {
-        const request = handlerInput.requestEnvelope.request;
-        return request.type === 'IntentRequest'
-            && request.intent.name === 'AMAZON.Skip';
-    },
-    handle(handlerInput) {
-        currentState += 1;
-        return handlerInput.responseBuilder
-            .addDelegateDirective(InProgressProgressReport)
-            .speak('Question was skipped');
-    },
-};
-
 const Restart = {
     canHandle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
         return request.type === 'IntentRequest'
-            && request.intent.name === 'AMAZON.Restart';
+            && request.intent.name === 'Restart';
     },
     handle(handlerInput) {
         resetToInitialState();
         return handlerInput.responseBuilder
-            .addDelegateDirective(InProgressProgressReport)
-            .speak('Restarting report...');
+            .speak('We have restarted your report. Please say start report to start your report')
+            .reprompt('//')
+            .getResponse();
     },
 };
 
@@ -314,15 +382,16 @@ const Summary = {
     canHandle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
         return request.type === 'IntentRequest'
-            && request.intent.name === 'AMAZON.Summary';
+            && request.intent.name === 'Summary';
     },
     handle(handlerInput) {
-      const state = currentState-1;
-      return handlerInput.responseBuilder
-        .speak('The response to your last question was' + getData(state)
-              + 'Would you like to redo this question?')
-        .getResponse();
-    }
+        currentState += 1;
+        let lastoutput = getData(currentState);
+        return handlerInput.responseBuilder
+            .speak('The response to your last question was' + lastoutput + 'Would you like to redo this question? If not, say continue report to continue your report.')
+            .reprompt('//')
+            .getResponse();
+    },
 
 };
 
@@ -336,22 +405,9 @@ const HelpHandler = {
     },
     handle(handlerInput) {
         return handlerInput.responseBuilder
-            .speak('This is Conrad Progress Report Skill.You can say, Start Report to start your report, Restart to restart your report, Skip to skip your question')
-            .reprompt('Say help again to iterate the options')
+            .speak('You can say, Start Report to start your report or continue report to continue your report, Restart to restart your report, Skip to skip your question, Next if you have completed answering a question')
+            .reprompt('//')
             .getResponse();
-    },
-};
-
-const NoHandler = {
-    canHandle(handlerInput) {
-        const request = handlerInput.requestEnvelope.request;
-
-        return request.type === 'IntentRequest'
-            && request.intent.name === 'AMAZON.NoIntent';
-    },
-    handle(handlerInput) {
-        return handlerInput.responseBuilder
-            .addDelegateDirective(InProgressProgressReport);
     },
 };
 
@@ -363,10 +419,13 @@ const YesHandler = {
             && request.intent.name === 'AMAZON.YesIntent';
     },
     handle(handlerInput) {
-        currentState -=1;
+        if (currentState != 0){
+            currentState -=1;
+        }
         return handlerInput.responseBuilder
-            .speak('Restarting question...')
-            .addDelegateDirective(InProgressProgressReport);
+            .speak('Restarting Question... Say continue report to keep reporting')
+            .reprompt('//')
+            .getResponse();
     },
 };
 
@@ -646,10 +705,8 @@ exports.handler = skillBuilder
         ProgressReport,
         GetEmail,
         Summary,
-        Skip,
         Restart,
-        YesHandler,
-        NoHandler
+        YesHandler
     )
     /*.addErrorHandlers(ErrorHandler)
     .withApiClient(new Alexa.DefaultApiClient())

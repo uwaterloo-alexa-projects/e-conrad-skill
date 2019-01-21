@@ -17,11 +17,24 @@ const EMAIL_PERMISSION = "alexa::profile:email:read";
 const EMPTY_STATE = 'empty';
 // used to move on to next step
 const TERMINATION_WORD = 'next';
-const HELP_WORD = ['help'];
-const SUMMARY_WORD = ['summary'];
-const RESTART_WORD = ['restart'];
+const helpWords = ['help'];
+const summaryWords = ['summary'];
+const restartWords = ['restart'];
 const MORE_INFO_PHRASE = 'Anything else?';
 const nextStepPhrases = ['nothing', 'nope', 'no', 'finish', 'next', 'continue', 'stop', 'that\'s it', 'skip'];
+
+// TODO. make constants for questions.
+const QUESTION_PROJECT_NAME = "";
+const QUESTION_PLAN_SHORT = "";
+const QUESTION_PROBLEM = "";
+const QUESTION_LESSON = "";
+//...
+
+// Add a random hints at the beginning of start report
+const hints = ['Did you know you can say help at any time for a list of commands?',
+                    'Did you know you can say next at the end of any bullet point to move to the next question?',
+                    'Did you know you can say restart to start your report all over?',
+                    'Did you know you can ask for a summary of your current bullet points by saying summary?'];
 
 // user state
 let userName = '';
@@ -103,15 +116,14 @@ const InProgressProgressReport = {
         const content = slotvalues_notresolved.content.resolved;
 
         if (containsInterjetWords(content)) {
-            if (content.includes(HELP_WORD)) {
+            if (content.includes(helpWords)) {
                 return HelpHandler.handle(handlerInput);
-            } else if (content.includes(SUMMARY_WORD)) {
+            } else if (content.includes(summaryWords)) {
                 return Summary.handle(handlerInput);
-            } else if (content.includes(RESTART_WORD)) {
+            } else if (content.includes(restartWords)) {
                 return Restart.handle(handlerInput);
             }
         }
-
 
         switch (currentState) {
             case STATE_INIT:
@@ -137,17 +149,15 @@ const InProgressProgressReport = {
                 break;
         }
 
-        // TODO FIX BELOW THIS
+        safelyModifyResponse(content);
+
         if (currentState === STATE_CONFIRMATION) {
+            console.log("confirmation state");
             currentState = STATE_SENDING;
             return handlerInput.responseBuilder
-                .speak(speechResponse + " .is this alright? Say send to send. Say restart to start over.")
-                .reprompt('is this alright? Say send to send. Say restart to start over')
+                .speak(speechResponse + " .is this alright? Say send email to send. Say restart to start over.")
+                .reprompt('//')
                 .getResponse();
-        } else if (currentState === STATE_SENDING) {
-            return handlerInput.responseBuilder
-                .speak("sending email...");
-            // SEND EMAIL CODE
         } else {
             return handlerInput.responseBuilder
                 .speak(speechResponse)
@@ -174,16 +184,12 @@ function handleStateInit() {
     currentState = STATE_PROJECT_NAME;
 }
 
+// Special case because we do not ask for more than one bullet for name
 function handleStateProjectName(content) {
-
-    speechResponse = 'What are your task plans for the next fifteen days?';
-    currentState = STATE_PLAN_SHORT;
-
-    if (content.includes(TERMINATION_WORD)) {
+    if (content !== undefined) {
+        data.projectName = content;
         speechResponse = 'What are your task plans for the next fifteen days?';
         currentState = STATE_PLAN_SHORT;
-    } else {
-        data.projectName = content;
     }
 }
 
@@ -272,6 +278,33 @@ function handleNotes(content) {
     }
 }
 
+function restateQuestion(state) {
+    switch (state) {
+        case STATE_INIT:
+            return "no data to report at the moment";
+        case STATE_PROJECT_NAME:
+            return 'What is your project name?';
+        case STATE_PLAN_SHORT:
+            return 'What are your task plans for the next fifteen days?';
+        case STATE_PROBLEM:
+            return 'What are your problems or challenges?';
+        case STATE_LESSON:
+            return 'What are some lessons you\'ve learned?';
+        case STATE_PLAN_LONG:
+            return 'What are your tasks for the next month?';
+        case STATE_NOTES:
+            return 'If you wish, please leave any notes or comments.';
+    }
+}
+
+function safelyModifyResponse(content) {
+    // Case occurs when the program returns from a help or summary intent
+    // We restate the question for clarity
+    if (content === undefined) {
+        speechResponse = restateQuestion(currentState);
+    }
+}
+
 function containsTerminationWord(content) {
     return content !== undefined && content.includes(TERMINATION_WORD);
 }
@@ -281,7 +314,7 @@ function shouldContinue(content) {
 }
 
 function containsInterjetWords(content) {
-    return content !== undefined && (HELP_WORD.includes(content) || SUMMARY_WORD.includes(content) || RESTART_WORD.includes(content));
+    return content !== undefined && (helpWords.includes(content) || summaryWords.includes(content) || restartWords.includes(content));
 }
 
 // end of helpers for progress intent
@@ -301,6 +334,7 @@ const ProgressReport = {
     },
 };
 
+// TODO FIX THE SEND EMAIL CODE
 const GetEmail = {
     canHandle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
@@ -308,13 +342,14 @@ const GetEmail = {
             && request.intent.name === 'GetEmail';
     },
     handle(handlerInput) {
+        console.log('get email intent fired');
         const currentDate = getTodaysDate();
         if (send) {
             updateAWSConfig();
             const sendPromise = queueSendEmail();
         }
         return handlerInput.responseBuilder
-            .speak('the data was sent')
+            .speak('sending data...')
             .reprompt('//')
             .getResponse();
     },
@@ -473,7 +508,7 @@ function generateEmailHtmlBody() {
         <head><b>Progress Report</b></head>
         <body>
             <p> <b>Student Name :</b> ${userName} </p>
-            <p> <b> Project Name:</b> ${convertBulletPointsToText(data.projectName)} </p>
+            <p> <b> Project Name:</b> ${data.projectName} </p>
             <p> <b> Reporting Date:</b> ${getTodaysDate()} </p><br/>
             <h4>Task(s) Planned for the Month and next 15 days：</h4> <p> ${convertBulletPointsToText(data.taskPlan15Days)} </p>
             <h4>Problem or Challenges you faced and had to manage：</h4> <p> ${convertBulletPointsToText(data.problemOrChallenges)}</p>

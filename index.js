@@ -379,8 +379,18 @@ const Summary = {
     handle(handlerInput) {
         let lastOutput = getData(currentState);
 
+        let response = '';
+
+        if (lastOutput = '') {
+            response = "Sorry. You current do not have any bullet points for this section." +
+                "Say continue report to continue your report";
+        } else {
+            response = "The response to your last question was: [" + lastOutput + "]. " +
+                "Would you like to redo this question? If not, say continue report to continue your report.";
+        }
+
         return handlerInput.responseBuilder
-            .speak("The response to your last question was: [" + lastOutput + "]. Would you like to redo this question? If not, say continue report to continue your report.")
+            .speak(response)
             .reprompt('//')
             .getResponse();
     },

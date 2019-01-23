@@ -30,15 +30,15 @@ exports.hints = ['Did you know you can say help at any time for a list of comman
 
 // progress states
 exports.NUM_STATES = 8;
-exports.states = {
-    STATE_INIT : 0,
-    STATE_PROJECT_NAME : 1,
-    STATE_PLAN_SHORT : 2,
-    STATE_PROBLEM : 3,
-    STATE_LESSON : 4,
-    STATE_PLAN_LONG : 5,
-    STATE_NOTES : 6,
-    STATE_CONFIRMATION : 7,
-    STATE_SENDING : 8
-}
+
+exports.STATE_INIT = 0;
+exports.STATE_PROJECT_NAME = 1;
+exports.STATE_PLAN_SHORT = 2;
+exports.STATE_PROBLEM = 3;
+exports.STATE_LESSON = 4;
+exports.STATE_PLAN_LONG = 5;
+exports.STATE_NOTES = 6;
+exports.STATE_CONFIRMATION = 7;
+exports.STATE_SENDING = 8;
+
 

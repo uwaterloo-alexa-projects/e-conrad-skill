@@ -5,54 +5,14 @@ const APP_NAME = "Conrad Progress Report Skill";
 
 //require other modules
 const aws_credentials = require('./credentials');
-
-// constant strings
-const messages = {
-    NOTIFY_MISSING_PERMISSIONS: 'Please enable profile permissions in the Amazon Alexa app.',
-    ERROR: 'Uh Oh. Looks like something went wrong.'
-};
-const FULL_NAME_PERMISSION = "alexa::profile:name:read";
-const EMAIL_PERMISSION = "alexa::profile:email:read";
-
-const EMPTY_STATE = 'empty';
-// used to move on to next step
-const TERMINATION_WORD = 'next';
-const helpWords = ['help'];
-const summaryWords = ['summary'];
-const restartWords = ['restart'];
-const MORE_INFO_PHRASE = 'Anything else?';
-const nextStepPhrases = ['nothing', 'nope', 'no', 'finish', 'next', 'continue', 'stop', 'that\'s it', 'skip'];
-
-// TODO. make constants for questions.
-const QUESTION_PROJECT_NAME = "";
-const QUESTION_PLAN_SHORT = "";
-const QUESTION_PROBLEM = "";
-const QUESTION_LESSON = "";
-//...
-
-// Add a random hints at the beginning of start report
-const hints = ['Did you know you can say help at any time for a list of commands?',
-                    'Did you know you can say next at the end of any bullet point to move to the next question?',
-                    'Did you know you can say restart to start your report all over?',
-                    'Did you know you can ask for a summary of your current bullet points by saying summary?'];
+const resources = require('./resources');
+const emailClient = require('./email-client');
 
 // user state
 let userName = '';
 let userEmail = '';
 
-// progress states
-const NUM_STATES = 8;
-const STATE_INIT = 0;
-const STATE_PROJECT_NAME = 1;
-const STATE_PLAN_SHORT = 2;
-const STATE_PROBLEM = 3;
-const STATE_LESSON = 4;
-const STATE_PLAN_LONG = 5;
-const STATE_NOTES = 6;
-const STATE_CONFIRMATION = 7;
-const STATE_SENDING = 8;
-
-let currentState = STATE_INIT;
+let currentState = resources.STATE_INIT;
 
 // content for email
 let data = {};
@@ -92,12 +52,12 @@ const LaunchRequestHandler = {
             console.log(JSON.stringify(error));
             if (error.statusCode == 403) {
                 return responseBuilder
-                    .speak(messages.NOTIFY_MISSING_PERMISSIONS)
-                    .withAskForPermissionsConsentCard([FULL_NAME_PERMISSION])
+                    .speak(resources.messages.NOTIFY_MISSING_PERMISSIONS)
+                    .withAskForPermissionsConsentCard([resources.FULL_NAME_PERMISSION])
                     .getResponse();
             }
             console.log(JSON.stringify(error));
-            const response = responseBuilder.speak(messages.ERROR).getResponse();
+            const response = responseBuilder.speak(resources.messages.ERROR).getResponse();
             return response;
         }
     },
@@ -116,44 +76,44 @@ const InProgressProgressReport = {
         const content = slotvalues_notresolved.content.resolved;
 
         if (containsInterjetWords(content)) {
-            if (content.includes(helpWords)) {
+            if (content.includes(resources.helpWords)) {
                 return HelpHandler.handle(handlerInput);
-            } else if (content.includes(summaryWords)) {
+            } else if (content.includes(resources.summaryWords)) {
                 return Summary.handle(handlerInput);
-            } else if (content.includes(restartWords)) {
+            } else if (content.includes(resources.restartWords)) {
                 return Restart.handle(handlerInput);
             }
         }
 
         switch (currentState) {
-            case STATE_INIT:
+            case resources.STATE_INIT:
                 handleStateInit();
                 break;
-            case STATE_PROJECT_NAME:
+            case resources.STATE_PROJECT_NAME:
                 handleStateProjectName(content);
                 break;
-            case STATE_PLAN_SHORT:
+            case resources.STATE_PLAN_SHORT:
                 handleStatePlanShort(content);
                 break;
-            case STATE_PROBLEM:
+            case resources.STATE_PROBLEM:
                 handleProblem(content);
                 break;
-            case STATE_LESSON:
+            case resources.STATE_LESSON:
                 handleLesson(content);
                 break;
-            case STATE_PLAN_LONG:
+            case resources.STATE_PLAN_LONG:
                 handleStatePlanLong(content);
                 break;
-            case STATE_NOTES:
+            case resources.STATE_NOTES:
                 handleNotes(content);
                 break;
         }
 
         safelyModifyResponse(content);
 
-        if (currentState === STATE_CONFIRMATION) {
+        if (currentState === resources.STATE_CONFIRMATION) {
             console.log("confirmation state");
-            currentState = STATE_SENDING;
+            currentState = resources.STATE_SENDING;
             return handlerInput.responseBuilder
                 .speak(speechResponse + " .is this alright? Say send email to send. Say restart to start over.")
                 .reprompt('//')
@@ -164,15 +124,6 @@ const InProgressProgressReport = {
                 .reprompt('//')
                 .addElicitSlotDirective('content')
                 .getResponse();
-            // const currentDate = getTodaysDate();
-            // if (send) {
-            //     updateAWSConfig();
-            //     const sendPromise = queueSendEmail();
-            // }
-            // return handlerInput.responseBuilder
-            //     .speak(generateConfirmationVoicePrompt())
-            //     .reprompt('is this alright?')
-            //     .getResponse();
         }
     },
 };
@@ -181,7 +132,7 @@ const InProgressProgressReport = {
 
 function handleStateInit() {
     speechResponse = 'What is your project name?';
-    currentState = STATE_PROJECT_NAME;
+    currentState = resources.STATE_PROJECT_NAME;
 }
 
 // Special case because we do not ask for more than one bullet for name
@@ -189,21 +140,21 @@ function handleStateProjectName(content) {
     if (content !== undefined) {
         data.projectName = content;
         speechResponse = 'What are your task plans for the next fifteen days?';
-        currentState = STATE_PLAN_SHORT;
+        currentState = resources.STATE_PLAN_SHORT;
     }
 }
 
 function handleStatePlanShort(content) {
     if (containsTerminationWord(content)) {
-        content = content.substring(0, content.indexOf(TERMINATION_WORD));
+        content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
         data.taskPlan15Days.push(content);
         speechResponse = 'What are your problems or challenges?';
-        currentState = STATE_PROBLEM;
+        currentState = resources.STATE_PROBLEM;
     } else if (shouldContinue(content)) {
         speechResponse = 'What are your problems or challenges?';
-        currentState = STATE_PROBLEM;
+        currentState = resources.STATE_PROBLEM;
     } else {
-        speechResponse = MORE_INFO_PHRASE;
+        speechResponse = resources.MORE_INFO_PHRASE;
         if (content !== undefined) {
             data.taskPlan15Days.push(content);
         }
@@ -212,15 +163,15 @@ function handleStatePlanShort(content) {
 
 function handleProblem(content) {
     if (containsTerminationWord(content)) {
-        content = content.substring(0, content.indexOf(TERMINATION_WORD));
+        content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
         data.problemOrChallenges.push(content);
         speechResponse = 'What are some lessons you\'ve learned?';
-        currentState = STATE_LESSON;
+        currentState = resources.STATE_LESSON;
     } else if (shouldContinue(content)) {
         speechResponse = 'What are some lessons you\'ve learned?';
-        currentState = STATE_LESSON;
+        currentState = resources.STATE_LESSON;
     } else {
-        speechResponse = MORE_INFO_PHRASE;
+        speechResponse = resources.MORE_INFO_PHRASE;
         if (content !== undefined) {
             data.problemOrChallenges.push(content);
         }
@@ -229,15 +180,15 @@ function handleProblem(content) {
 
 function handleLesson(content) {
     if (containsTerminationWord(content)) {
-        content = content.substring(0, content.indexOf(TERMINATION_WORD));
+        content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
         data.lessonsLearned.push(content);
         speechResponse = 'What are your tasks for the next month?';
-        currentState = STATE_PLAN_LONG;
+        currentState = resources.STATE_PLAN_LONG;
     } else if (shouldContinue(content)) {
         speechResponse = 'What are your tasks for the next month?';
-        currentState = STATE_PLAN_LONG;
+        currentState = resources.STATE_PLAN_LONG;
     } else {
-        speechResponse = MORE_INFO_PHRASE;
+        speechResponse = resources.MORE_INFO_PHRASE;
         if (content !== undefined) {
             data.lessonsLearned.push(content);
         }
@@ -246,15 +197,15 @@ function handleLesson(content) {
 
 function handleStatePlanLong(content) {
     if (containsTerminationWord(content)) {
-        content = content.substring(0, content.indexOf(TERMINATION_WORD));
+        content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
         data.taskPlanNextMonth.push(content);
         speechResponse = 'If you wish, please leave any notes or comments.';
-        currentState = STATE_NOTES;
+        currentState = resources.STATE_NOTES;
     } else if (shouldContinue(content)) {
         speechResponse = 'If you wish, please leave any notes or comments.';
-        currentState = STATE_NOTES;
+        currentState = resources.STATE_NOTES;
     } else {
-        speechResponse = MORE_INFO_PHRASE;
+        speechResponse = resources.MORE_INFO_PHRASE;
         if (content !== undefined) {
             data.taskPlanNextMonth.push(content);
         }
@@ -263,15 +214,15 @@ function handleStatePlanLong(content) {
 
 function handleNotes(content) {
     if (containsTerminationWord(content)) {
-        content = content.substring(0, content.indexOf(TERMINATION_WORD));
+        content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
         data.notes.push(content);
-        speechResponse = generateConfirmationVoicePrompt();
-        currentState = STATE_CONFIRMATION;
+        speechResponse = emailClient.generateConfirmationVoicePrompt(userName, data);
+        currentState = resources.STATE_CONFIRMATION;
     } else if (shouldContinue(content)) {
-        speechResponse = generateConfirmationVoicePrompt();
-        currentState = STATE_CONFIRMATION;
+        speechResponse = emailClient.generateConfirmationVoicePrompt(userName, data);
+        currentState = resources.STATE_CONFIRMATION;
     } else {
-        speechResponse = MORE_INFO_PHRASE;
+        speechResponse = resources.MORE_INFO_PHRASE;
         if (content !== undefined) {
             data.notes.push(content);
         }
@@ -280,19 +231,19 @@ function handleNotes(content) {
 
 function restateQuestion(state) {
     switch (state) {
-        case STATE_INIT:
+        case resources.STATE_INIT:
             return "no data to report at the moment";
-        case STATE_PROJECT_NAME:
+        case resources.STATE_PROJECT_NAME:
             return 'What is your project name?';
-        case STATE_PLAN_SHORT:
+        case resources.STATE_PLAN_SHORT:
             return 'What are your task plans for the next fifteen days?';
-        case STATE_PROBLEM:
+        case resources.STATE_PROBLEM:
             return 'What are your problems or challenges?';
-        case STATE_LESSON:
+        case resources.STATE_LESSON:
             return 'What are some lessons you\'ve learned?';
-        case STATE_PLAN_LONG:
+        case resources.STATE_PLAN_LONG:
             return 'What are your tasks for the next month?';
-        case STATE_NOTES:
+        case resources.STATE_NOTES:
             return 'If you wish, please leave any notes or comments.';
     }
 }
@@ -306,15 +257,15 @@ function safelyModifyResponse(content) {
 }
 
 function containsTerminationWord(content) {
-    return content !== undefined && content.includes(TERMINATION_WORD);
+    return content !== undefined && content.includes(resources.TERMINATION_WORD);
 }
 
 function shouldContinue(content) {
-    return content !== undefined && nextStepPhrases.includes(content);
+    return content !== undefined && resources.nextStepPhrases.includes(content);
 }
 
 function containsInterjetWords(content) {
-    return content !== undefined && (helpWords.includes(content) || summaryWords.includes(content) || restartWords.includes(content));
+    return content !== undefined && (resources.helpWords.includes(content) || resources.summaryWords.includes(content) || resources.restartWords.includes(content));
 }
 
 // end of helpers for progress intent
@@ -343,9 +294,9 @@ const GetEmail = {
     },
     handle(handlerInput) {
         console.log('get email intent fired');
-        const currentDate = getTodaysDate();
         if (send) {
             updateAWSConfig();
+            // This promise might be broken.
             const sendPromise = queueSendEmail();
         }
         return handlerInput.responseBuilder
@@ -471,64 +422,7 @@ const ErrorHandler = {
     },
 };
 
-/* HTML and markdown formatting functions */
-
-function generateConfirmationVoicePrompt() {
-
-    return `Progress Report:
-    Student Name: ${userName}.
-    Project Name: ${data.projectName}.
-    Reporting Date: ${getTodaysDate()}.
-    Task(s) Planned for the Month and next 15 days: ${convertBulletPointsToText(data.taskPlan15Days)}.
-    Problem or Challenges you faced and had to manage：${convertBulletPointsToText(data.problemOrChallenges)}.
-    Lesson(s) Learned： ${convertBulletPointsToText(data.lessonsLearned)}.
-    Task(s) Planned for Next Month： ${convertBulletPointsToText(data.taskPlanNextMonth)}.
-    Notes or Comments ${convertBulletPointsToText(data.notes)}. `;
-}
-
-function generateParams() {
-    return {
-        Destination: {
-            ToAddresses: ['uwalexacoop@gmail.com']
-            //ToAddresses: [recipient]
-        },
-        Message: {
-            Body: {
-                Html: {
-                    Charset: "UTF-8",
-                    Data: generateEmailHtmlBody()
-                },
-                Text: {
-                    Charset: "UTF-8",
-                    Data: generateEmailTextBody()
-                }
-            },
-            Subject: {
-                Charset: "UTF-8",
-                Data: 'UWATERLOO DATA'
-            }
-        },
-        Source: `Conrad Progress Report from xuan <x34ren@edu.uwaterloo.ca>`
-        //Source: 'Email from Xuan <'+recipient+'>'
-    };
-}
-
-function generateEmailHtmlBody() {
-    return `<html>
-        <head><b>Progress Report</b></head>
-        <body>
-            <p> <b>Student Name :</b> ${userName} </p>
-            <p> <b> Project Name:</b> ${data.projectName} </p>
-            <p> <b> Reporting Date:</b> ${getTodaysDate()} </p><br/>
-            <h4>Task(s) Planned for the Month and next 15 days：</h4> <p> ${convertBulletPointsToText(data.taskPlan15Days)} </p>
-            <h4>Problem or Challenges you faced and had to manage：</h4> <p> ${convertBulletPointsToText(data.problemOrChallenges)}</p>
-            <h4>Lesson(s) Learned：</h4> <p>  ${convertBulletPointsToText(data.lessonsLearned)} </p>
-            <h4>Task(s) Planned for Next Month：</h4> <p>   ${convertBulletPointsToText(data.taskPlanNextMonth)} </p>
-            <h4>Notes/Comments：</h4> <p>  ${convertBulletPointsToText(data.notes)} </p><br/>
-        </body>
-    </html>`;
-
-}
+/* HELPER FUNCTIONS */
 
 function convertBulletPointsToText(bullets) {
     let text = "";
@@ -538,20 +432,11 @@ function convertBulletPointsToText(bullets) {
     return text;
 }
 
-function generateEmailTextBody() {
-    return `
-              Hi ,
-              ...
-            `;
-}
-
-/* HELPER FUNCTIONS */
-
 function queueSendEmail() {
     //SES means simple email service. It is the sending email api offered by Amazon Web Service
     //TODO change to Gmail API
     return new AWS.SES({apiVersion: "2010-12-01"})
-        .sendEmail(generateParams())
+        .sendEmail(emailClient.generateParams(userName, data))
         .promise()
         .then(data => {
             console.log(data.MessageId);
@@ -576,27 +461,8 @@ function containsKeyWordsToProceed(tempContent) {
         || tempContent.includes('mentor') || tempContent.includes('advisor') || tempContent.includes('brief');
 }
 
-function getTodaysDate() {
-
-    let today = new Date();
-    let dd = today.getDate();
-    let mm = today.getMonth() + 1; //January is 0!
-    let yyyy = today.getFullYear();
-
-    if (dd < 10) {
-        dd = '0' + dd;
-    }
-
-    if (mm < 10) {
-        mm = '0' + mm;
-    }
-
-    today = dd + '/' + mm + '/' + yyyy;
-    return today;
-}
-
 function resetToInitialState() {
-    currentState = STATE_INIT;
+    currentState = resources.STATE_INIT;
     data.projectName = "";
     data.problemOrChallenges = [];
     data.taskPlan15Days = [];
@@ -609,43 +475,43 @@ function resetToInitialState() {
 
 function getData(state) {
     switch (state) {
-        case STATE_INIT:
+        case resources.STATE_INIT:
             return "no data to report at the moment";
-        case STATE_PROJECT_NAME:
+        case resources.STATE_PROJECT_NAME:
             return convertBulletPointsToText(data.projectName);
-        case STATE_PLAN_SHORT:
+        case resources.STATE_PLAN_SHORT:
             return convertBulletPointsToText(data.taskPlan15Days);
-        case STATE_PROBLEM:
+        case resources.STATE_PROBLEM:
             return convertBulletPointsToText(data.problemOrChallenges);
-        case STATE_LESSON:
+        case resources.STATE_LESSON:
             return convertBulletPointsToText(data.lessonsLearned);
-        case STATE_PLAN_LONG:
+        case resources.STATE_PLAN_LONG:
             return convertBulletPointsToText(data.taskPlanNextMonth);
-        case STATE_NOTES:
+        case resources.STATE_NOTES:
             return convertBulletPointsToText(data.notes);
     }
 }
 
 function clearData(state) {
     switch (state) {
-        case STATE_INIT:
+        case resources.STATE_INIT:
             break;
-        case STATE_PROJECT_NAME:
+        case resources.STATE_PROJECT_NAME:
             data.projectName = '';
             break;
-        case STATE_PLAN_SHORT:
+        case resources.STATE_PLAN_SHORT:
             data.taskPlan15Days = [];
             break;
-        case STATE_PROBLEM:
+        case resources.STATE_PROBLEM:
             data.problemOrChallenges = [];
             break;
-        case STATE_LESSON:
+        case resources.STATE_LESSON:
             data.lessonsLearned = [];
             break;
-        case STATE_PLAN_LONG:
+        case resources.STATE_PLAN_LONG:
             data.taskPlanNextMonth = [];
             break;
-        case STATE_NOTES:
+        case resources.STATE_NOTES:
             data.notes = [];
             break;
     }

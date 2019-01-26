@@ -7,6 +7,7 @@ const APP_NAME = "Conrad Progress Report Skill";
 const aws_credentials = require('./credentials');
 const resources = require('./resources');
 const emailClient = require('./email-client');
+AWS.config.update({region: 'us-east-1'});
 
 // user state
 let userName = '';
@@ -296,11 +297,17 @@ const GetEmail = {
         console.log('get email intent fired');
         if (send) {
             updateAWSConfig();
-            // This promise might be broken.
-            const sendPromise = queueSendEmail();
+            const sendPromise = new AWS.SES({apiVersion: '2010-12-01'}).sendEmail(emailClient.generateParams(userName, data)).promise();
+            sendPromise.then(
+              function(data) {
+                console.log(data.MessageId);
+              }).catch(
+                function(err) {
+                console.error(err, err.stack);
+              });
         }
         return handlerInput.responseBuilder
-            .speak('sending data...')
+            .speak('Data has been sent. Thank you.')
             .reprompt('//')
             .getResponse();
     },
@@ -432,22 +439,22 @@ function convertBulletPointsToText(bullets) {
     return text;
 }
 
-function queueSendEmail() {
-    //SES means simple email service. It is the sending email api offered by Amazon Web Service
-    //TODO change to Gmail API
-    return new AWS.SES({apiVersion: "2010-12-01"})
-        .sendEmail(emailClient.generateParams(userName, data))
-        .promise()
-        .then(data => {
-            console.log(data.MessageId);
-            resetToInitialState();
-            context.done(null, "Success");
-        }).catch(err => {
-            console.error(err, err.stack);
-            resetToInitialState();
-            context.done(null, "Failed");
-        });
-}
+
+//function queueSendEmail() {
+//    //SES means simple email service. It is the sending email api offered by Amazon Web Service
+//    //TODO change to Gmail API
+//    return new AWS.SES({apiVersion: '2010-12-01'})
+//               .sendTemplatedEmail(params).promise();
+//        .then(data => {
+//            console.log(data.MessageId);
+//            resetToInitialState();
+//            context.done(null, "Success");
+//        }).catch(err => {
+//            console.error(err, err.stack);
+//            resetToInitialState();
+//            context.done(null, "Failed");
+//        });
+//}
 
 function updateAWSConfig() {
     // TODO remove these secret access keys and access keys from github

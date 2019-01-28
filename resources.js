@@ -38,15 +38,10 @@ exports.question = {
 }
 
 // Add a random hints at the beginning of start report
-let hints = exports.hints = ['Did you know you can say help at any time for a list of commands?',
+exports.hints = ['Did you know you can say help at any time for a list of commands?',
                     'Did you know you can say next at the end of any bullet point to move to the next question?',
                     'Did you know you can say restart to start your report all over?',
                     'Did you know you can ask for a summary of your current bullet points by saying summary?'];
-
-
-exports.getRandomHint = function() {
-    return hints[Math.random() * hints.length];
-}
 
 // progress states
 exports.NUM_STATES = 8;

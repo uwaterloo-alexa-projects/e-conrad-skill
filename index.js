@@ -41,7 +41,7 @@ const LaunchRequestHandler = {
             console.log(profileEmail + 'test2');
             userName += profileName;
             userEmail += profileEmail;
-            const speechResponse = `Hello, ${profileName}. ` + resources.prompts.start + ' ' + resources.getRandomHint();
+            const speechResponse = `Hello, ${profileName}. ` + resources.prompts.start + ' ' + getRandomHint();
 
             return responseBuilder
                 .speak(speechResponse)
@@ -418,6 +418,10 @@ const ErrorHandler = {
 };
 
 /* HELPER FUNCTIONS */
+
+function getRandomHint() {
+    return resources.hints[Math.floor(Math.random() * resources.hints.length)];
+}
 
 function convertBulletPointsToText(bullets) {
     let text = "";

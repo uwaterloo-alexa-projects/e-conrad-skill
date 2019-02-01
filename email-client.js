@@ -41,12 +41,14 @@ exports.generateParams = function(userName, data) {
                 Data: 'UWATERLOO DATA'
             }
         },
-        Source: `Conrad Progress Report from xuan <x34ren@edu.uwaterloo.ca>`
-        //Source: 'Email from Xuan <'+recipient+'>'
+        Source: 'uwalexacoop@gmail.com',
+        ReturnPathArn: 'arn:aws:ses:us-east-1:528823259307:identity/uwalexacoop@gmail.com',
+        SourceArn: 'arn:aws:ses:us-east-1:528823259307:identity/uwalexacoop@gmail.com' ,
     };
 }
 
 function generateEmailHtmlBody(userName, data) {
+    console.log ('generating html...')
     return `<html>
         <head><b>Progress Report</b></head>
         <body>

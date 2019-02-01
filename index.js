@@ -301,6 +301,7 @@ const GetEmail = {
             sendPromise.then(
               function(data) {
                 console.log(data.MessageId);
+                resetToInitialState();
               }).catch(
                 function(err) {
                 console.error(err, err.stack);

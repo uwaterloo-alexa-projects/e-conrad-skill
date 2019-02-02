@@ -301,6 +301,7 @@ const GetEmail = {
             sendPromise.then(
               function(data) {
                 console.log(data.MessageId);
+                resetToInitialState();
               }).catch(
                 function(err) {
                 console.error(err, err.stack);
@@ -365,10 +366,10 @@ const HelpHandler = {
     },
     handle(handlerInput) {
         return handlerInput.responseBuilder
-            .speak('You can say, Start Report to start your report or continue report to continue your report, ' +
+            .speak('You can say, Start Report to start your report'+
                 'Restart to restart your report, ' +
                 'Skip to skip your question, ' +
-                'Next if you have completed answering a question. ' +
+                'End your answer with the word "next", if you have completed answering a question.' +
                 'Continue by saying continue report to resume your current question')
             .reprompt('//')
             .getResponse();

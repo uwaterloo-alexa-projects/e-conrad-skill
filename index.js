@@ -42,7 +42,7 @@ const LaunchRequestHandler = {
             console.log(profileEmail + 'test2');
             userName += profileName;
             userEmail += profileEmail;
-            const speechResponse = `Hello, ${profileName}. Welcome to the Conrad Reporting Skill. Please say "start report" to get started.`;
+            const speechResponse = `Hello, ${profileName}. ` + resources.prompts.start + ' ' + getRandomHint();
 
             return responseBuilder
                 .speak(speechResponse)
@@ -116,7 +116,7 @@ const InProgressProgressReport = {
             console.log("confirmation state");
             currentState = resources.STATE_SENDING;
             return handlerInput.responseBuilder
-                .speak(speechResponse + " .is this alright? Say send email to send. Say restart to start over.")
+                .speak(speechResponse + resources.prompts.confirmation)
                 .reprompt('//')
                 .getResponse();
         } else {
@@ -132,7 +132,7 @@ const InProgressProgressReport = {
 // helpers for the progress intent
 
 function handleStateInit() {
-    speechResponse = 'What is your project name?';
+    speechResponse = resources.question.project_name;
     currentState = resources.STATE_PROJECT_NAME;
 }
 
@@ -140,7 +140,7 @@ function handleStateInit() {
 function handleStateProjectName(content) {
     if (content !== undefined) {
         data.projectName = content;
-        speechResponse = 'What are your task plans for the next fifteen days?';
+        speechResponse = resources.question.plan_short;
         currentState = resources.STATE_PLAN_SHORT;
     }
 }
@@ -149,10 +149,10 @@ function handleStatePlanShort(content) {
     if (containsTerminationWord(content)) {
         content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
         data.taskPlan15Days.push(content);
-        speechResponse = 'What are your problems or challenges?';
+        speechResponse = resources.question.problem;
         currentState = resources.STATE_PROBLEM;
     } else if (shouldContinue(content)) {
-        speechResponse = 'What are your problems or challenges?';
+        speechResponse = resources.question.problem;
         currentState = resources.STATE_PROBLEM;
     } else {
         speechResponse = resources.MORE_INFO_PHRASE;
@@ -166,10 +166,10 @@ function handleProblem(content) {
     if (containsTerminationWord(content)) {
         content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
         data.problemOrChallenges.push(content);
-        speechResponse = 'What are some lessons you\'ve learned?';
+        speechResponse = resources.question.lesson;
         currentState = resources.STATE_LESSON;
     } else if (shouldContinue(content)) {
-        speechResponse = 'What are some lessons you\'ve learned?';
+        speechResponse = resources.question.lesson;
         currentState = resources.STATE_LESSON;
     } else {
         speechResponse = resources.MORE_INFO_PHRASE;
@@ -183,10 +183,10 @@ function handleLesson(content) {
     if (containsTerminationWord(content)) {
         content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
         data.lessonsLearned.push(content);
-        speechResponse = 'What are your tasks for the next month?';
+        speechResponse = resources.question.plan_long;
         currentState = resources.STATE_PLAN_LONG;
     } else if (shouldContinue(content)) {
-        speechResponse = 'What are your tasks for the next month?';
+        speechResponse = resources.question.plan_long;
         currentState = resources.STATE_PLAN_LONG;
     } else {
         speechResponse = resources.MORE_INFO_PHRASE;
@@ -200,10 +200,10 @@ function handleStatePlanLong(content) {
     if (containsTerminationWord(content)) {
         content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
         data.taskPlanNextMonth.push(content);
-        speechResponse = 'If you wish, please leave any notes or comments.';
+        speechResponse = resources.question.notes;
         currentState = resources.STATE_NOTES;
     } else if (shouldContinue(content)) {
-        speechResponse = 'If you wish, please leave any notes or comments.';
+        speechResponse = resources.question.notes;
         currentState = resources.STATE_NOTES;
     } else {
         speechResponse = resources.MORE_INFO_PHRASE;
@@ -233,19 +233,19 @@ function handleNotes(content) {
 function restateQuestion(state) {
     switch (state) {
         case resources.STATE_INIT:
-            return "no data to report at the moment";
+            return resources.question.init;
         case resources.STATE_PROJECT_NAME:
-            return 'What is your project name?';
+            return resources.question.project_name;
         case resources.STATE_PLAN_SHORT:
-            return 'What are your task plans for the next fifteen days?';
+            return resources.question.plan_short;
         case resources.STATE_PROBLEM:
-            return 'What are your problems or challenges?';
+            return resources.question.problem;
         case resources.STATE_LESSON:
-            return 'What are some lessons you\'ve learned?';
+            return resources.question.lesson;
         case resources.STATE_PLAN_LONG:
-            return 'What are your tasks for the next month?';
+            return resources.question.plan_long;
         case resources.STATE_NOTES:
-            return 'If you wish, please leave any notes or comments.';
+            return resources.question.notes;
     }
 }
 
@@ -323,7 +323,7 @@ const Restart = {
     handle(handlerInput) {
         resetToInitialState();
         return handlerInput.responseBuilder
-            .speak('We have restarted your report. Please say start report to start your report')
+            .speak(resources.prompts.post_restart_report)
             .reprompt('//')
             .getResponse();
     },
@@ -341,8 +341,7 @@ const Summary = {
         let response = '';
 
         if (lastOutput = '') {
-            response = "Sorry. You current do not have any bullet points for this section." +
-                "Say continue report to continue your report";
+            response = resources.prompts.no_bullets;
         } else {
             response = "The response to your last question was: [" + lastOutput + "]. " +
                 "Would you like to redo this question? If not, say continue report to continue your report.";
@@ -366,11 +365,7 @@ const HelpHandler = {
     },
     handle(handlerInput) {
         return handlerInput.responseBuilder
-            .speak('You can say, Start Report to start your report or continue report to continue your report, ' +
-                'Restart to restart your report, ' +
-                'Skip to skip your question, ' +
-                'Next if you have completed answering a question. ' +
-                'Continue by saying continue report to resume your current question')
+            .speak(resources.prompts.help)
             .reprompt('//')
             .getResponse();
     },
@@ -386,7 +381,7 @@ const YesHandler = {
     handle(handlerInput) {
         clearData(currentState);
         return handlerInput.responseBuilder
-            .speak('Restarting Question... Say continue report to keep reporting')
+            .speak(resources.prompts.post_restart_question)
             .reprompt('//')
             .getResponse();
     },
@@ -431,6 +426,10 @@ const ErrorHandler = {
 };
 
 /* HELPER FUNCTIONS */
+
+function getRandomHint() {
+    return resources.hints[Math.floor(Math.random() * resources.hints.length)];
+}
 
 function convertBulletPointsToText(bullets) {
     let text = "";
@@ -484,7 +483,7 @@ function resetToInitialState() {
 function getData(state) {
     switch (state) {
         case resources.STATE_INIT:
-            return "no data to report at the moment";
+            return resources.question.init;
         case resources.STATE_PROJECT_NAME:
             return convertBulletPointsToText(data.projectName);
         case resources.STATE_PLAN_SHORT:

@@ -40,9 +40,10 @@ const LaunchRequestHandler = {
             console.log(profileName + 'test2');
             const profileEmail = await upsServiceClient.getProfileEmail();
             console.log(profileEmail + 'test2');
-            userName += profileName;
-            userEmail += profileEmail;
-            const speechResponse = `Hello, ${profileName}. ` + resources.prompts.start + ' ' + getRandomHint();
+            userName = profileName;
+            userEmail = profileEmail;
+            // TODO replace hard code
+            const speechResponse = `Hello, UWaterloo Co-op Team. ` + resources.prompts.start + ' ' + getRandomHint();
 
             return responseBuilder
                 .speak(speechResponse)

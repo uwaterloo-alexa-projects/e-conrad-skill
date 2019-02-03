@@ -81,7 +81,9 @@ const InProgressProgressReport = {
                 return HelpHandler.handle(handlerInput);
             } else if (content.includes(resources.summaryWords)) {
                 return Summary.handle(handlerInput);
-            } else if (content.includes(resources.restartWords)) {
+            } else if (content.includes(resources.restartQuestionWords)) {
+                return RestartQuestion.handle(handlerInput);
+            } else if (content.includes(resources.restartReportWords)) {
                 return Restart.handle(handlerInput);
             }
         }
@@ -111,7 +113,7 @@ const InProgressProgressReport = {
         }
 
         safelyModifyResponse(content);
-
+        console.log(JSON.stringify(data));
         if (currentState === resources.STATE_CONFIRMATION) {
             console.log("confirmation state");
             currentState = resources.STATE_SENDING;
@@ -266,7 +268,8 @@ function shouldContinue(content) {
 }
 
 function containsInterjetWords(content) {
-    return content !== undefined && (resources.helpWords.includes(content) || resources.summaryWords.includes(content) || resources.restartWords.includes(content));
+    return content !== undefined && (resources.helpWords.includes(content) || resources.summaryWords.includes(content) 
+                    || resources.restartReportWords.includes(content) || resources.restartQuestionWords.includes(content));
 }
 
 // end of helpers for progress intent
@@ -329,6 +332,18 @@ const Restart = {
     },
 };
 
+const RestartQuestion = {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        return request.type === 'IntentRequest'
+            && request.intent.name === 'RestartQuestion';
+    },
+    handle(handlerInput) {
+        return YesHandler.handle(handlerInput);
+    },
+};
+
+
 const Summary = {
     canHandle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
@@ -336,13 +351,11 @@ const Summary = {
             && request.intent.name === 'Summary';
     },
     handle(handlerInput) {
-        let lastOutput = getData(currentState);
-
         let response = '';
-
         if (lastOutput = '') {
             response = resources.prompts.no_bullets;
         } else {
+            let lastOutput = getData(currentState);
             response = "The response to your last question was: [" + lastOutput + "]. " +
                 "Would you like to redo this question? If not, say continue report to continue your report.";
         }
@@ -438,23 +451,6 @@ function convertBulletPointsToText(bullets) {
     });
     return text;
 }
-
-
-//function queueSendEmail() {
-//    //SES means simple email service. It is the sending email api offered by Amazon Web Service
-//    //TODO change to Gmail API
-//    return new AWS.SES({apiVersion: '2010-12-01'})
-//               .sendTemplatedEmail(params).promise();
-//        .then(data => {
-//            console.log(data.MessageId);
-//            resetToInitialState();
-//            context.done(null, "Success");
-//        }).catch(err => {
-//            console.error(err, err.stack);
-//            resetToInitialState();
-//            context.done(null, "Failed");
-//        });
-//}
 
 function updateAWSConfig() {
     // TODO remove these secret access keys and access keys from github
@@ -595,7 +591,8 @@ exports.handler = skillBuilder
         GetEmail,
         Summary,
         Restart,
-        YesHandler
+        YesHandler,
+        RestartQuestion
     )
     /*.addErrorHandlers(ErrorHandler)
     .withApiClient(new Alexa.DefaultApiClient())

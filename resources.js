@@ -10,7 +10,8 @@ exports.EMAIL_PERMISSION = "alexa::profile:email:read";
 exports.TERMINATION_WORD = 'next';
 exports.helpWords = ['help'];
 exports.summaryWords = ['summarize'];
-exports.restartWords = ['restart'];
+exports.restartReportWords = ['restart report'];
+exports.restartQuestionWords = ['restart question'];
 exports.MORE_INFO_PHRASE = 'Anything else?';
 exports.nextStepPhrases = ['nothing', 'nope', 'no', 'finish', 'next', 'continue', 'stop', 'that\'s it', 'skip'];
 

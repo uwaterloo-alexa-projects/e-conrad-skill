@@ -329,6 +329,18 @@ const Restart = {
     },
 };
 
+const RestartQuestion = {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        return request.type === 'IntentRequest'
+            && request.intent.name === 'RestartQuestion';
+    },
+    handle(handlerInput) {
+        return YesHandler.handle(handlerInput);
+    },
+};
+
+
 const Summary = {
     canHandle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
@@ -438,23 +450,6 @@ function convertBulletPointsToText(bullets) {
     });
     return text;
 }
-
-
-//function queueSendEmail() {
-//    //SES means simple email service. It is the sending email api offered by Amazon Web Service
-//    //TODO change to Gmail API
-//    return new AWS.SES({apiVersion: '2010-12-01'})
-//               .sendTemplatedEmail(params).promise();
-//        .then(data => {
-//            console.log(data.MessageId);
-//            resetToInitialState();
-//            context.done(null, "Success");
-//        }).catch(err => {
-//            console.error(err, err.stack);
-//            resetToInitialState();
-//            context.done(null, "Failed");
-//        });
-//}
 
 function updateAWSConfig() {
     // TODO remove these secret access keys and access keys from github
@@ -595,7 +590,8 @@ exports.handler = skillBuilder
         GetEmail,
         Summary,
         Restart,
-        YesHandler
+        YesHandler,
+        RestartQuestion
     )
     /*.addErrorHandlers(ErrorHandler)
     .withApiClient(new Alexa.DefaultApiClient())

@@ -9,7 +9,7 @@ exports.EMAIL_PERMISSION = "alexa::profile:email:read";
 
 exports.TERMINATION_WORD = 'next';
 exports.helpWords = ['help'];
-exports.summaryWords = ['summary'];
+exports.summaryWords = ['summarize'];
 exports.restartWords = ['restart'];
 exports.MORE_INFO_PHRASE = 'Anything else?';
 exports.nextStepPhrases = ['nothing', 'nope', 'no', 'finish', 'next', 'continue', 'stop', 'that\'s it', 'skip'];
@@ -41,7 +41,7 @@ exports.question = {
 exports.hints = ['Did you know you can say help at any time for a list of commands?',
                     'Did you know you can say next at the end of any bullet point to move to the next question?',
                     'Did you know you can say restart to start your report all over?',
-                    'Did you know you can ask for a summary of your current bullet points by saying summary?'];
+                    'Did you know you can ask for a summary of your current bullet points by saying summarize?'];
 
 // progress states
 exports.NUM_STATES = 8;

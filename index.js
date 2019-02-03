@@ -81,7 +81,9 @@ const InProgressProgressReport = {
                 return HelpHandler.handle(handlerInput);
             } else if (content.includes(resources.summaryWords)) {
                 return Summary.handle(handlerInput);
-            } else if (content.includes(resources.restartWords)) {
+            } else if (content.includes(resources.restartQuestionWords)) {
+                return RestartQuestion.handle(handlerInput);
+            } else if (content.includes(resources.restartReportWords)) {
                 return Restart.handle(handlerInput);
             }
         }
@@ -111,7 +113,7 @@ const InProgressProgressReport = {
         }
 
         safelyModifyResponse(content);
-
+        console.log(JSON.stringify(data));
         if (currentState === resources.STATE_CONFIRMATION) {
             console.log("confirmation state");
             currentState = resources.STATE_SENDING;
@@ -266,7 +268,8 @@ function shouldContinue(content) {
 }
 
 function containsInterjetWords(content) {
-    return content !== undefined && (resources.helpWords.includes(content) || resources.summaryWords.includes(content) || resources.restartWords.includes(content));
+    return content !== undefined && (resources.helpWords.includes(content) || resources.summaryWords.includes(content) 
+                    || resources.restartReportWords.includes(content) || resources.restartQuestionWords.includes(content));
 }
 
 // end of helpers for progress intent
@@ -348,13 +351,11 @@ const Summary = {
             && request.intent.name === 'Summary';
     },
     handle(handlerInput) {
-        let lastOutput = getData(currentState);
-
         let response = '';
-
         if (lastOutput = '') {
             response = resources.prompts.no_bullets;
         } else {
+            let lastOutput = getData(currentState);
             response = "The response to your last question was: [" + lastOutput + "]. " +
                 "Would you like to redo this question? If not, say continue report to continue your report.";
         }

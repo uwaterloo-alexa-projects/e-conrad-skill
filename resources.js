@@ -19,13 +19,13 @@ exports.prompts = {
     post_restart_report : 'We have restarted your report. Please say start report to start your report',
     post_restart_question : 'Restarting Question... Say continue report to keep reporting',
     no_bullets : "Sorry. You current do not have any bullet points for this section. Say continue report to continue your report",
-    help : 'You can say, Start Report to start your report or continue report to continue your report, ' +
+    help : 'You can say, start Report to start your report, ' +
             'Restart to restart your report, ' +
             'Skip to skip your question, ' +
             'Next if you have completed answering a question. ' +
             'Continue by saying continue report to resume your current question',
     start : 'Welcome to the Conrad Reporting Skill. Please say "start report" to get started.',
-    confirmation : ' .is this alright? Say send email to send. Say restart to start over.'
+    confirmation : ' .is this alright? Say send email to send. Say restart if you wish to start over.'
 }
 
 exports.question = {

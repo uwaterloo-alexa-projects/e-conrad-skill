@@ -7,7 +7,7 @@ let userName = {};
 // exports
 
 exports.generateConfirmationVoicePrompt = function(userName, data) {
-
+    console.log("generating voice confirmation");
     return `Progress Report:
     Student Name: ${userName}.
     Project Name: ${data.projectName}.
@@ -47,6 +47,7 @@ exports.generateParams = function(userName, data, userEmail) {
 }
 
 function generateEmailHtmlBody(userName, data) {
+    console.log("generating email body");
     return `<html>
         <head><b>Progress Report</b></head>
         <body>

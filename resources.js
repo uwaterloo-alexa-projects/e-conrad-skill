@@ -15,6 +15,10 @@ exports.restartQuestionWords = ['restart question'];
 exports.MORE_INFO_PHRASE = 'Anything else?';
 exports.nextStepPhrases = ['nothing', 'nope', 'no', 'finish', 'next', 'continue', 'stop', 'that\'s it', 'skip'];
 
+exports.keys = {
+    
+}
+
 exports.prompts = {
     post_restart_report : 'We have restarted your entire report. Say \"start report\" to begin completing your report',
     post_restart_question : 'Restarting Question... Say \"continue report\" to begin answering this question',

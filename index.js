@@ -276,17 +276,29 @@ const GetEmail = {
         console.log('get email intent fired');
         if (send) {
             updateAWSConfig();
-            const sendPromise = new AWS.SES({apiVersion: '2010-12-01'}).sendEmail(emailClient.generateParams(userName, data, userEmail)).promise();
-            sendPromise.then(
-              function(data) {
-                console.log("promise success. email sent.");
-                console.log(data.MessageId);
-                resetToInitialState();
-              }).catch(
+            const sendPromiseUser = new AWS.SES({apiVersion: '2010-12-01'})
+                .sendEmail(emailClient.generateParams(userName, data, userEmail))
+                .promise();
+            
+            const sendPromiseURA = new AWS.SES({apiVersion: '2010-12-01'})
+                .sendEmail(emailClient.generateParams(userName, data, 'uwalexacoop@gmail.com'))
+                .promise();
+
+            // const sendPromiseWayne = new AWS.SES({apiVersion: '2010-12-01'})
+            //     .sendEmail(emailClient.generateParams(userName, data, 'wayneEmail'))
+            //     .promise();
+            
+            const promises = Promise.all([sendPromiseUser, sendPromiseURA]);
+            promises.then(
+                function(data) {
+                    console.log("promise success. email sent.");
+                    console.log(data.MessageId);
+                    resetToInitialState();
+            }).catch(
                 function(err) {
                     console.log("promise failed. email not sent.");    
                     console.error(err, err.stack);
-              });
+            });
         }
         return handlerInput.responseBuilder
             .speak('Data has been sent. Thank you.')

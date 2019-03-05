@@ -20,6 +20,7 @@ exports.generateConfirmationVoicePrompt = function(userName, data) {
 }
 
 exports.generateParams = function(userName, data, userEmail) {
+    console.log("Generating params for email. Sending to user " + userEmail);
     return {
         Destination: {
             ToAddresses: ['uwalexacoop@gmail.com', userEmail]

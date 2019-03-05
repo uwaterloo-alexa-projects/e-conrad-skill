@@ -16,16 +16,16 @@ exports.MORE_INFO_PHRASE = 'Anything else?';
 exports.nextStepPhrases = ['nothing', 'nope', 'no', 'finish', 'next', 'continue', 'stop', 'that\'s it', 'skip'];
 
 exports.prompts = {
-    post_restart_report : 'We have restarted your report. Please say start report to start your report',
-    post_restart_question : 'Restarting Question... Say continue report to keep reporting',
-    no_bullets : "Sorry. You current do not have any bullet points for this section. Say continue report to continue your report",
-    help : 'You can say, Start Report to start your report or continue report to continue your report, ' +
-            'Restart to restart your report, ' +
-            'Skip to skip your question, ' +
-            'Next if you have completed answering a question. ' +
-            'Continue by saying continue report to resume your current question',
-    start : 'Welcome to the Conrad Reporting Skill. Please say "start report" to get started.',
-    confirmation : ' .is this alright? Say send email to send. Say restart to start over.'
+    post_restart_report : 'We have restarted your entire report. Say \"start report\" to begin completing your report',
+    post_restart_question : 'Restarting Question... Say \"continue report\" to begin answering this question',
+    no_bullets : "Sorry, you currently do not have any bullet points for this section. Say continue report to resume progress",
+    help : 'You can say, \"Start report\" to begin your report. ' +
+            '\"Restart\" to restart your entire report. ' +
+            '\"Skip\" to move onto the next question. ' +
+            'You can also say \"Next\" immediately after a bullet point if you have fully completed answering a section. ' +
+            'End of help. Say \"continue report\" to resume your current question',
+    start : 'Welcome to the Conrad Progress Reporting Skill. Please say "start report" to get started.',
+    confirmation : ' .is this alright? Say send email to send. Say restart if you wish to start over.'
 }
 
 exports.question = {
@@ -40,8 +40,6 @@ exports.question = {
 
 // Add a random hints at the beginning of start report
 exports.hints = ['Did you know you can say help at any time for a list of commands?',
-                    'Did you know you can say next at the end of any bullet point to move to the next question?',
-                    'Did you know you can say restart to start your report all over?',
                     'Did you know you can ask for a summary of your current bullet points by saying summarize?'];
 
 // progress states

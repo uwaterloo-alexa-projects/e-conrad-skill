@@ -19,10 +19,10 @@ exports.generateConfirmationVoicePrompt = function(userName, data) {
     Notes or Comments ${convertBulletPointsToText(data.notes)}. `;
 }
 
-exports.generateParams = function(userName, data) {
+exports.generateParams = function(userName, data, userEmail) {
     return {
         Destination: {
-            ToAddresses: ['uwalexacoop@gmail.com']
+            ToAddresses: ['uwalexacoop@gmail.com', userEmail]
             //ToAddresses: [recipient]
         },
         Message: {

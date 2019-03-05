@@ -301,7 +301,7 @@ const GetEmail = {
         console.log('get email intent fired');
         if (send) {
             updateAWSConfig();
-            const sendPromise = new AWS.SES({apiVersion: '2010-12-01'}).sendEmail(emailClient.generateParams(userName, data)).promise();
+            const sendPromise = new AWS.SES({apiVersion: '2010-12-01'}).sendEmail(emailClient.generateParams(userName, data, userEmail)).promise();
             sendPromise.then(
               function(data) {
                 console.log(data.MessageId);

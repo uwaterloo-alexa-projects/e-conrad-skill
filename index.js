@@ -37,14 +37,12 @@ const LaunchRequestHandler = {
         try {
             const upsServiceClient = serviceClientFactory.getUpsServiceClient();
             const profileName = await upsServiceClient.getProfileName();
-            console.log(profileName + 'test2');
             const profileEmail = await upsServiceClient.getProfileEmail();
-            console.log(profileEmail + 'test2');
             userName = profileName;
             userEmail = profileEmail;
             // TODO replace hard code
-            const speechResponse = `Hello, UWaterloo Co-op Team. ` + resources.prompts.start + ' ' + getRandomHint();
-
+            const speechResponse = `Hello, ` + profileName + '. ' + resources.prompts.start + ' ' + getRandomHint();
+            console.log("Session start: " + profileEmail + ' - ' + profileName);
             return responseBuilder
                 .speak(speechResponse)
                 .reprompt(`Please say "start report" to get started.`)
@@ -79,12 +77,16 @@ const InProgressProgressReport = {
 
         if (containsInterjetWords(content)) {
             if (content.includes(resources.helpWords)) {
+                console.log("Used help command");
                 return HelpHandler.handle(handlerInput);
             } else if (content.includes(resources.summaryWords)) {
+                console.log("Used summary command");
                 return Summary.handle(handlerInput);
             } else if (content.includes(resources.restartQuestionWords)) {
+                console.log("Used restart question command");
                 return RestartQuestion.handle(handlerInput);
             } else if (content.includes(resources.restartReportWords)) {
+                console.log("Used restart report command");
                 return Restart.handle(handlerInput);
             }
         }
@@ -134,6 +136,23 @@ const InProgressProgressReport = {
 
 // helpers for the progress intent
 
+function handleStep(content, key, response, state) {
+    if (containsTerminationWord(content)) {
+        content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
+        data[key].push(content);
+        speechResponse = response;
+        currentState = state;
+    } else if (shouldContinue(content)) {
+        speechResponse = response;
+        currentState = state;
+    } else {
+        speechResponse = resources.MORE_INFO_PHRASE;
+        if (content !== undefined) {
+            data[key].push(content);
+        }
+    }
+}
+
 function handleStateInit() {
     speechResponse = resources.question.project_name;
     currentState = resources.STATE_PROJECT_NAME;
@@ -145,75 +164,28 @@ function handleStateProjectName(content) {
         data.projectName = content;
         speechResponse = resources.question.plan_short;
         currentState = resources.STATE_PLAN_SHORT;
+        console.log("project name is: " + data.projectName);
     }
 }
 
 function handleStatePlanShort(content) {
-    if (containsTerminationWord(content)) {
-        content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
-        data.taskPlan15Days.push(content);
-        speechResponse = resources.question.problem;
-        currentState = resources.STATE_PROBLEM;
-    } else if (shouldContinue(content)) {
-        speechResponse = resources.question.problem;
-        currentState = resources.STATE_PROBLEM;
-    } else {
-        speechResponse = resources.MORE_INFO_PHRASE;
-        if (content !== undefined) {
-            data.taskPlan15Days.push(content);
-        }
-    }
+    handleStep(content, "taskPlan15Days", resources.question.problem, resources.STATE_PROBLEM);
+    console.log("short plan is: " + JSON.stringify(data.taskPlan15Days));
 }
 
 function handleProblem(content) {
-    if (containsTerminationWord(content)) {
-        content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
-        data.problemOrChallenges.push(content);
-        speechResponse = resources.question.lesson;
-        currentState = resources.STATE_LESSON;
-    } else if (shouldContinue(content)) {
-        speechResponse = resources.question.lesson;
-        currentState = resources.STATE_LESSON;
-    } else {
-        speechResponse = resources.MORE_INFO_PHRASE;
-        if (content !== undefined) {
-            data.problemOrChallenges.push(content);
-        }
-    }
+    handleStep(content, "problemOrChallenges", resources.question.lesson, resources.STATE_LESSON);
+    console.log("problem is: " + JSON.stringify(data.problemOrChallenges))
 }
 
 function handleLesson(content) {
-    if (containsTerminationWord(content)) {
-        content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
-        data.lessonsLearned.push(content);
-        speechResponse = resources.question.plan_long;
-        currentState = resources.STATE_PLAN_LONG;
-    } else if (shouldContinue(content)) {
-        speechResponse = resources.question.plan_long;
-        currentState = resources.STATE_PLAN_LONG;
-    } else {
-        speechResponse = resources.MORE_INFO_PHRASE;
-        if (content !== undefined) {
-            data.lessonsLearned.push(content);
-        }
-    }
+    handleStep(content, "lessonsLearned", resources.question.plan_long, resources.STATE_PLAN_LONG);
+    console.log("lessons learned is: " + JSON.stringify(data.lessonsLearned))
 }
 
 function handleStatePlanLong(content) {
-    if (containsTerminationWord(content)) {
-        content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
-        data.taskPlanNextMonth.push(content);
-        speechResponse = resources.question.notes;
-        currentState = resources.STATE_NOTES;
-    } else if (shouldContinue(content)) {
-        speechResponse = resources.question.notes;
-        currentState = resources.STATE_NOTES;
-    } else {
-        speechResponse = resources.MORE_INFO_PHRASE;
-        if (content !== undefined) {
-            data.taskPlanNextMonth.push(content);
-        }
-    }
+    handleStep(content, "taskPlanNextMonth", resources.question.notes, resources.STATE_NOTES);
+    console.log("long plan is: " + JSON.stringify(data.taskPlan15Days))
 }
 
 function handleNotes(content) {
@@ -231,9 +203,11 @@ function handleNotes(content) {
             data.notes.push(content);
         }
     }
+    console.log("notes is: " + JSON.stringify(data.notes))
 }
 
 function restateQuestion(state) {
+    console.log("restate question at state " + state);
     switch (state) {
         case resources.STATE_INIT:
             return resources.question.init;
@@ -255,6 +229,7 @@ function restateQuestion(state) {
 function safelyModifyResponse(content) {
     // Case occurs when the program returns from a help or summary intent
     // We restate the question for clarity
+    console.log("returning from help or summary");
     if (content === undefined) {
         speechResponse = restateQuestion(currentState);
     }
@@ -304,11 +279,13 @@ const GetEmail = {
             const sendPromise = new AWS.SES({apiVersion: '2010-12-01'}).sendEmail(emailClient.generateParams(userName, data, userEmail)).promise();
             sendPromise.then(
               function(data) {
+                console.log("promise success. email sent.");
                 console.log(data.MessageId);
                 resetToInitialState();
               }).catch(
                 function(err) {
-                console.error(err, err.stack);
+                    console.log("promise failed. email not sent.");    
+                    console.error(err, err.stack);
               });
         }
         return handlerInput.responseBuilder
@@ -446,6 +423,7 @@ function getRandomHint() {
 }
 
 function convertBulletPointsToText(bullets) {
+    console.log(JSON.stringify(bullets));
     let text = "";
     bullets.forEach(bullet => {
         text += bullet + ". ";
@@ -475,6 +453,7 @@ function resetToInitialState() {
     data.notes = [];
     first = true;
     send = true;
+    console.log("after reset: data is " + JSON.stringify(data));
 }
 
 function getData(state) {

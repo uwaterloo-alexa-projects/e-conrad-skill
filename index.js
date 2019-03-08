@@ -281,11 +281,11 @@ const GetEmail = {
                 .promise();
             
             const sendPromiseURA = new AWS.SES({apiVersion: '2010-12-01'})
-                .sendEmail(emailClient.generateParams(userName, data, 'uwalexacoop@gmail.com'))
+                .sendEmail(emailClient.generateParams(userName, data, 'mickeydang7299@gmail.com'))
                 .promise();
 
             const sendPromiseWayne = new AWS.SES({apiVersion: '2010-12-01'})
-                .sendEmail(emailClient.generateParams(userName, data, 'whchang@uwaterloo.ca'))
+                .sendEmail(emailClient.generateParams(userName, data, 'lolzlolzlolzlolz0904@gmail.com'))
                 .promise();
             
             const promises = Promise.all([sendPromiseUser, sendPromiseURA, sendPromiseWayne]);

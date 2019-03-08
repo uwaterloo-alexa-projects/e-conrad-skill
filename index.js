@@ -284,11 +284,11 @@ const GetEmail = {
                 .sendEmail(emailClient.generateParams(userName, data, 'uwalexacoop@gmail.com'))
                 .promise();
 
-            // const sendPromiseWayne = new AWS.SES({apiVersion: '2010-12-01'})
-            //     .sendEmail(emailClient.generateParams(userName, data, 'wayneEmail'))
-            //     .promise();
+            const sendPromiseWayne = new AWS.SES({apiVersion: '2010-12-01'})
+                .sendEmail(emailClient.generateParams(userName, data, 'whchang@uwaterloo.ca'))
+                .promise();
             
-            const promises = Promise.all([sendPromiseUser, sendPromiseURA]);
+            const promises = Promise.all([sendPromiseUser, sendPromiseURA, sendPromiseWayne]);
             promises.then(
                 function(data) {
                     console.log("promise success. email sent.");

@@ -32,6 +32,9 @@ const LaunchRequestHandler = {
         return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
     },
     async handle(handlerInput) {
+
+        console.log("hello world. start of alexa skill launch");
+
         resetToInitialState();
         const {serviceClientFactory, responseBuilder} = handlerInput;
         try {
@@ -56,7 +59,6 @@ const LaunchRequestHandler = {
                     .withAskForPermissionsConsentCard([resources.FULL_NAME_PERMISSION])
                     .getResponse();
             }
-            console.log(JSON.stringify(error));
             const response = responseBuilder.speak(resources.messages.ERROR).getResponse();
             return response;
         }
@@ -66,16 +68,20 @@ const LaunchRequestHandler = {
 const InProgressProgressReport = {
     canHandle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
+        console.log("intent: " + request.type + " - " + request.intent.name + " - " + request.dialogState);
         return request.type === 'IntentRequest'
             && request.intent.name === 'ProgressReport'
-            && request.dialogState !== 'COMPLETED';  //&& request.dialogState !== 'COMPLETED'; means you have not finished the conversation
+            // && request.dialogState !== 'COMPLETED';  //&& request.dialogState !== 'COMPLETED'; means you have not finished the conversation
     },
     handle(handlerInput) {
         const filledSlots = handlerInput.requestEnvelope.request.intent.slots;
         const slotvalues_notresolved = getSlotValues(filledSlots);
         const content = slotvalues_notresolved.content.resolved;
 
+        console.log("In state: " + currentState);
+
         if (containsInterjetWords(content)) {
+            console.log("found interject word inside phrase: " + content);
             if (content.includes(resources.helpWords)) {
                 console.log("Used help command");
                 return HelpHandler.handle(handlerInput);
@@ -115,6 +121,7 @@ const InProgressProgressReport = {
                 break;
         }
 
+        console.log("speech response is currently: " + speechResponse);
         safelyModifyResponse(content);
         console.log(JSON.stringify(data));
         if (currentState === resources.STATE_CONFIRMATION) {
@@ -122,12 +129,13 @@ const InProgressProgressReport = {
             currentState = resources.STATE_SENDING;
             return handlerInput.responseBuilder
                 .speak(speechResponse + resources.prompts.confirmation)
-                .reprompt('//')
+                .reprompt('report in progress')
                 .getResponse();
         } else {
+            console.log("speech response is finally: " + speechResponse);
             return handlerInput.responseBuilder
                 .speak(speechResponse)
-                .reprompt('//')
+                .reprompt('report in progress')
                 .addElicitSlotDirective('content')
                 .getResponse();
         }
@@ -229,8 +237,9 @@ function restateQuestion(state) {
 function safelyModifyResponse(content) {
     // Case occurs when the program returns from a help or summary intent
     // We restate the question for clarity
-    console.log("returning from help or summary");
     if (content === undefined) {
+        console.log("returning from help or summary");
+        console.log("content is found to be undefined");
         speechResponse = restateQuestion(currentState);
     }
 }
@@ -252,15 +261,18 @@ function containsInterjetWords(content) {
 
 const ProgressReport = {
     canHandle(handlerInput) {
-        const request = handlerInput.requestEnvelope.request;
-        return request.type === 'IntentRequest'
-            && request.intent.name === 'ProgressReport'
-            && request.dialogState === 'COMPLETED';
+        return false;
+        // const request = handlerInput.requestEnvelope.request;
+        // console.log("intent: " + request.type + " - " + request.intent.name + " - " + request.dialogState);
+        // return request.type === 'IntentRequest'
+        //     && request.intent.name === 'ProgressReport'
+        //     && request.dialogState === 'COMPLETED';
     },
     handle(handlerInput) {
+        console.log("end of progress report");
         return handlerInput.responseBuilder
-            .speak('//')
-            .reprompt('//')
+            .speak('end of progress report')
+            .reprompt("end of progress report")
             .getResponse();
     },
 };
@@ -301,8 +313,8 @@ const GetEmail = {
             });
         }
         return handlerInput.responseBuilder
-            .speak('Data has been sent. Thank you.')
-            .reprompt('//')
+            .speak('Data has been sent. Thank you. Say close to exit the skill.')
+            .reprompt('email sent')
             .getResponse();
     },
 };
@@ -317,7 +329,7 @@ const Restart = {
         resetToInitialState();
         return handlerInput.responseBuilder
             .speak(resources.prompts.post_restart_report)
-            .reprompt('//')
+            .reprompt('restarted')
             .getResponse();
     },
 };
@@ -352,7 +364,7 @@ const Summary = {
 
         return handlerInput.responseBuilder
             .speak(response)
-            .reprompt('//')
+            .reprompt('summary done')
             .getResponse();
     },
 
@@ -369,7 +381,7 @@ const HelpHandler = {
     handle(handlerInput) {
         return handlerInput.responseBuilder
             .speak(resources.prompts.help)
-            .reprompt('//')
+            .reprompt('help finished')
             .getResponse();
     },
 };
@@ -385,7 +397,7 @@ const YesHandler = {
         clearData(currentState);
         return handlerInput.responseBuilder
             .speak(resources.prompts.post_restart_question)
-            .reprompt('//')
+            .reprompt('yes handler finished')
             .getResponse();
     },
 };

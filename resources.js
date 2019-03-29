@@ -13,7 +13,7 @@ exports.summaryWords = ['summarize'];
 exports.restartReportWords = ['restart report'];
 exports.restartQuestionWords = ['restart question'];
 exports.MORE_INFO_PHRASE = 'Anything else?';
-exports.nextStepPhrases = ['nothing', 'nope', 'no', 'finish', 'next', 'continue', 'stop', 'that\'s it', 'skip'];
+exports.nextStepPhrases = ['nothing', 'nope', 'no', 'finish', 'next', 'continue', 'stop', 'that\'s it', 'skip', 'done'];
 
 exports.keys = {
     

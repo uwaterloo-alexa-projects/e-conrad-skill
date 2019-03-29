@@ -55,11 +55,11 @@ function generateEmailHtmlBody(userName, data) {
             <p> <b>Student Name :</b> ${userName} </p>
             <p> <b> Project Name:</b> ${data.projectName} </p>
             <p> <b> Reporting Date:</b> ${getTodaysDate()} </p><br/>
-            <h4>Task(s) Planned for the Month and next 15 days：</h4> <p> ${convertBulletPointsToText(data.taskPlan15Days)} </p>
-            <h4>Problem or Challenges you faced and had to manage：</h4> <p> ${convertBulletPointsToText(data.problemOrChallenges)}</p>
-            <h4>Lesson(s) Learned：</h4> <p>  ${convertBulletPointsToText(data.lessonsLearned)} </p>
-            <h4>Task(s) Planned for Next Month：</h4> <p>   ${convertBulletPointsToText(data.taskPlanNextMonth)} </p>
-            <h4>Notes/Comments：</h4> <p>  ${convertBulletPointsToText(data.notes)} </p><br/>
+            <h4>Task(s) Planned for the Month and next 15 days：</h4> <p> ${formatBulletPoints(data.taskPlan15Days)} </p>
+            <h4>Problem or Challenges you faced and had to manage：</h4> <p> ${formatBulletPoints(data.problemOrChallenges)}</p>
+            <h4>Lesson(s) Learned：</h4> <p>  ${formatBulletPoints(data.lessonsLearned)} </p>
+            <h4>Task(s) Planned for Next Month：</h4> <p>   ${formatBulletPoints(data.taskPlanNextMonth)} </p>
+            <h4>Notes/Comments：</h4> <p>  ${formatBulletPoints(data.notes)} </p><br/>
         </body>
     </html>`;
 
@@ -70,6 +70,16 @@ function generateEmailTextBody() {
               Hi ,
               ...
             `;
+}
+
+function formatBulletPoints(bullets) {
+    let text = "";
+    bullets.forEach(bullet => {
+        if (bullet != "") {
+            text += bullet + ". <br/>";
+        }
+    });
+    return text;
 }
 
 function convertBulletPointsToText(bullets) {

@@ -245,7 +245,18 @@ function safelyModifyResponse(content) {
 }
 
 function containsTerminationWord(content) {
-    return content !== undefined && content.includes(resources.TERMINATION_WORD);
+    if (content === undefined) {
+        return false;
+    } 
+
+    let words = content.split(" ");
+    let currWords = words[words.length - 1];
+
+    if (words.length > 1) {
+        currWords += " " + words[words.length - 2];
+    }
+
+    return currWords !== undefined && currWords.includes(resources.TERMINATION_WORD);
 }
 
 function shouldContinue(content) {

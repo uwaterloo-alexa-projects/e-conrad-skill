@@ -6,17 +6,37 @@ let userName = {};
 
 // exports
 
+exports.generateEmailRequest = function() {
+    console.log("asking if user wishes to send email or ask for summary");
+    return 'End of questions. If you wish to send this as an email to all stakeholders, say send email. ' + 
+        'If you wish to hear the answers before sending, say repeat my answers';
+}
+
+exports.generateConfirmationPromptEnd = function(data) {
+    console.log("generating voice confirmation end");
+    return `Progress Report Continued:
+        Problem or Challenges you faced and had to manage：${convertBulletPointsToText(data.problemOrChallenges)}.
+        Lesson(s) Learned： ${convertBulletPointsToText(data.lessonsLearned)}.
+        Task(s) Planned for Next Month： ${convertBulletPointsToText(data.taskPlanNextMonth)}.
+        Notes or Comments ${convertBulletPointsToText(data.notes)}. `;
+}
+
+exports.generateConfirmationPromptStart = function(userName, data) {
+    console.log("generating voice confirmation start");
+    return `Progress Report:
+        Student Name: ${userName}.
+        Project Name: ${data.projectName}.
+        Reporting Date: ${getTodaysDate()}.
+        Task(s) Planned for the Month and next 15 days: ${convertBulletPointsToText(data.taskPlan15Days)}.`;
+}
+
 exports.generateConfirmationVoicePrompt = function(userName, data) {
     console.log("generating voice confirmation");
     return `Progress Report:
-    Student Name: ${userName}.
-    Project Name: ${data.projectName}.
-    Reporting Date: ${getTodaysDate()}.
-    Task(s) Planned for the Month and next 15 days: ${convertBulletPointsToText(data.taskPlan15Days)}.
-    Problem or Challenges you faced and had to manage：${convertBulletPointsToText(data.problemOrChallenges)}.
-    Lesson(s) Learned： ${convertBulletPointsToText(data.lessonsLearned)}.
-    Task(s) Planned for Next Month： ${convertBulletPointsToText(data.taskPlanNextMonth)}.
-    Notes or Comments ${convertBulletPointsToText(data.notes)}. `;
+        Student Name: ${userName}.
+        Project Name: ${data.projectName}.
+        Reporting Date: ${getTodaysDate()}.
+        Task(s) Planned for the Month and next 15 days: ${convertBulletPointsToText(data.taskPlan15Days)}.`;
 }
 
 exports.generateParams = function(userName, data, userEmail) {

@@ -119,26 +119,33 @@ const InProgressProgressReport = {
             case resources.STATE_NOTES:
                 handleNotes(content);
                 break;
+            case resources.STATE_CONFIRMATION:
+                handleConfirmation(content);
+                break; 
+            case resources.STATE_FINISH_ANSWER_SUMMARY:
+                handleFinishAnswerSummary(content)       
         }
 
         console.log("speech response is currently: " + speechResponse);
         safelyModifyResponse(content);
         console.log(JSON.stringify(data));
-        if (currentState === resources.STATE_CONFIRMATION) {
-            console.log("confirmation state");
-            currentState = resources.STATE_SENDING;
-            return handlerInput.responseBuilder
-                .speak(speechResponse + resources.prompts.confirmation)
-                .reprompt('report in progress')
-                .getResponse();
-        } else {
-            console.log("speech response is finally: " + speechResponse);
-            return handlerInput.responseBuilder
-                .speak(speechResponse)
-                .reprompt('report in progress')
-                .addElicitSlotDirective('content')
-                .getResponse();
-        }
+        console.log("speech response is finally: " + speechResponse);
+
+        // send email prematurely if the user does not want to hear the whole summary. 
+        if (currentState === resources.STATE_CONFIRMATION || currentState === resources.STATE_FINISH_ANSWER_SUMMARY) {
+            // Send email is the key intent word.
+            if (content === resources.sendEmailPrompt) {
+                return GetEmail.handle(handlerInput);
+            } else if (content === resources.restartReportWords[0]) {
+                return Restart.handle(handlerInput);
+            }
+        } 
+
+        return handlerInput.responseBuilder
+            .speak(speechResponse)
+            .reprompt('This report is still in progress. Please answer the question')
+            .addElicitSlotDirective('content')
+            .getResponse();
     },
 };
 
@@ -200,10 +207,10 @@ function handleNotes(content) {
     if (containsTerminationWord(content)) {
         content = content.substring(0, content.indexOf(resources.TERMINATION_WORD));
         data.notes.push(content);
-        speechResponse = emailClient.generateConfirmationVoicePrompt(userName, data);
+        speechResponse = emailClient.generateEmailRequest();
         currentState = resources.STATE_CONFIRMATION;
     } else if (shouldContinue(content)) {
-        speechResponse = emailClient.generateConfirmationVoicePrompt(userName, data);
+        speechResponse = emailClient.generateEmailRequest();
         currentState = resources.STATE_CONFIRMATION;
     } else {
         speechResponse = resources.MORE_INFO_PHRASE;
@@ -212,6 +219,23 @@ function handleNotes(content) {
         }
     }
     console.log("notes is: " + JSON.stringify(data.notes))
+}
+
+function handleConfirmation(content) {
+    if (content === resources.repeatAnswers) {
+        speechResponse = emailClient.generateConfirmationPromptStart(userName, data) + resources.prompts.confirmation_start;
+        currentState = resources.STATE_FINISH_ANSWER_SUMMARY;
+    } else {
+        speechResponse = resources.prompts.re_confirm_start;
+    }
+}
+
+function handleFinishAnswerSummary(content) {
+    if (content === resources.finishAnswers) {
+        speechResponse = emailClient.generateConfirmationPromptEnd(data) + resources.prompts.confirmation_end;
+    } else {
+        speechResponse = resources.prompts.re_confirm_end;
+    }
 }
 
 function restateQuestion(state) {
@@ -288,7 +312,6 @@ const ProgressReport = {
     },
 };
 
-// TODO FIX THE SEND EMAIL CODE
 const GetEmail = {
     canHandle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
@@ -307,11 +330,11 @@ const GetEmail = {
                 .sendEmail(emailClient.generateParams(userName, data, 'uwalexacoop@gmail.com'))
                 .promise();
 
-            const sendPromiseWayne = new AWS.SES({apiVersion: '2010-12-01'})
-                .sendEmail(emailClient.generateParams(userName, data, 'whchang@uwaterloo.ca'))
-                .promise();
+            // const sendPromiseWayne = new AWS.SES({apiVersion: '2010-12-01'})
+            //     .sendEmail(emailClient.generateParams(userName, data, 'whchang@uwaterloo.ca'))
+            //     .promise();
             
-            const promises = Promise.all([sendPromiseUser, sendPromiseURA, sendPromiseWayne]);
+            const promises = Promise.all([sendPromiseUser, sendPromiseURA]);
             promises.then(
                 function(data) {
                     console.log("promise success. email sent.");

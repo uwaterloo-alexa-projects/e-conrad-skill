@@ -18,9 +18,10 @@ let currentState = resources.STATE_INIT;
 // content for email
 let data = {};
 
+// testing flag
+let isProduction = false;
+
 // variable state
-let first = true;
-let send = true;
 let speechResponse = '';
 
 
@@ -320,32 +321,38 @@ const GetEmail = {
     },
     handle(handlerInput) {
         console.log('get email intent fired');
-        if (send) {
-            updateAWSConfig();
-            const sendPromiseUser = new AWS.SES({apiVersion: '2010-12-01'})
-                .sendEmail(emailClient.generateParams(userName, data, userEmail))
-                .promise();
-            
-            const sendPromiseURA = new AWS.SES({apiVersion: '2010-12-01'})
-                .sendEmail(emailClient.generateParams(userName, data, 'uwalexacoop@gmail.com'))
+        updateAWSConfig();
+        const sendPromiseUser = new AWS.SES({apiVersion: '2010-12-01'})
+            .sendEmail(emailClient.generateParams(userName, data, userEmail))
+            .promise();
+                        
+        const sendPromiseURA = new AWS.SES({apiVersion: '2010-12-01'})
+            .sendEmail(emailClient.generateParams(userName, data, 'uwalexacoop@gmail.com'))
+            .promise();
+
+        const promises; 
+                 
+        if (isProduction) {
+            const sendPromiseWayne = new AWS.SES({apiVersion: '2010-12-01'})
+                .sendEmail(emailClient.generateParams(userName, data, 'whchang@uwaterloo.ca'))
                 .promise();
 
-            // const sendPromiseWayne = new AWS.SES({apiVersion: '2010-12-01'})
-            //     .sendEmail(emailClient.generateParams(userName, data, 'whchang@uwaterloo.ca'))
-            //     .promise();
-            
-            const promises = Promise.all([sendPromiseUser, sendPromiseURA]);
-            promises.then(
-                function(data) {
-                    console.log("promise success. email sent.");
-                    console.log(data.MessageId);
-                    resetToInitialState();
-            }).catch(
-                function(err) {
-                    console.log("promise failed. email not sent.");    
-                    console.error(err, err.stack);
-            });
+            promises = Promise.all([sendPromiseUser, sendPromiseURA, sendPromiseWayne]);    
+        } else {
+            promises = Promise.all([sendPromiseUser, sendPromiseURA]);  
         }
+            
+        promises.then(
+            function(data) {
+                console.log("promise success. email sent.");                    
+                console.log(data.MessageId);
+                resetToInitialState();
+        }).catch(
+            function(err) {
+                console.log("promise failed. email not sent.");    
+                console.error(err, err.stack);
+        });
+        
         return handlerInput.responseBuilder
             .speak('Data has been sent. Thank you. Say close to exit the skill.')
             .reprompt('email sent')

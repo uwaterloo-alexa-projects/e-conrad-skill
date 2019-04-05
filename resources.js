@@ -14,6 +14,9 @@ exports.restartReportWords = ['restart report'];
 exports.restartQuestionWords = ['restart question'];
 exports.MORE_INFO_PHRASE = 'Anything else?';
 exports.nextStepPhrases = ['nothing', 'nope', 'no', 'finish', 'next', 'continue', 'stop', 'that\'s it', 'skip', 'done'];
+exports.repeatAnswers = "repeat my answers";
+exports.finishAnswers = "finish my answers";
+exports.sendEmailPrompt = "send email";
 
 exports.keys = {
     
@@ -29,7 +32,10 @@ exports.prompts = {
             'You can also say \"Next\" immediately after a bullet point if you have fully completed answering a section. ' +
             'End of help. Say \"continue report\" to resume your current question',
     start : 'Welcome to the Conrad Progress Reporting Skill. Please say "start report" to get started.',
-    confirmation : ' .is this alright? Say send email to send. Say restart if you wish to start over.'
+    confirmation_start : '. Is this alright? Say send email to send. Say finish my answers to hear the remainder of the summary.',
+    confirmation_end : ' . Is this alright? Say send email to send. Say restart if you wish to start over.',
+    re_confirm_start : 'Sorry, I didn\'t understand that. If you wish to send email, say send email. If you wish to hear your answers, say repeat my answers',
+    re_confirm_end : 'Sorry, I didn\'t understand that. If you wish to send email, say send email. If you wish to finish hearing your answers, say finish my answers'
 }
 
 exports.question = {
@@ -57,6 +63,6 @@ exports.STATE_LESSON = 4;
 exports.STATE_PLAN_LONG = 5;
 exports.STATE_NOTES = 6;
 exports.STATE_CONFIRMATION = 7;
-exports.STATE_SENDING = 8;
+exports.STATE_FINISH_ANSWER_SUMMARY = 8;
 
 
